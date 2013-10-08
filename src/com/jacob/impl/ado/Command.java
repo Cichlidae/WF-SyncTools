@@ -73,8 +73,7 @@ public class Command extends Dispatch
     return (Recordset)Dispatch.call(this, "Execute", RecordsAffected, Parameters, new Variant(Options)).toDispatch();
   }
 
-  public Recordset Execute()
-  {
+  public Recordset Execute() {
 	  Variant dummy = new Variant();
     return new Recordset(Dispatch.call(this, "Execute", dummy).toDispatch());
   }
