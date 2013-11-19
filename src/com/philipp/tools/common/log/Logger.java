@@ -1,4 +1,4 @@
-package com.philipp.tools.best.log;
+package com.philipp.tools.common.log;
 
 import java.io.UnsupportedEncodingException;
 
@@ -34,6 +34,11 @@ public class Logger {
 		catch (UnsupportedEncodingException e) {			
 		}
 		System.err.println(message);		
+	}
+	
+	public static void err (Exception e) {
+		if (!DEBUG_ON) return;
+		e.printStackTrace();
 	}
 	
 	public static void debug (String message) {

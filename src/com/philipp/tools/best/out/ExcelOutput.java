@@ -2,10 +2,16 @@ package com.philipp.tools.best.out;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -26,28 +32,42 @@ import com.jacob.com.Variant;
 import com.jacob.impl.ado.Field;
 import com.jacob.impl.ado.Fields;
 import com.jacob.impl.ado.Recordset;
-import com.philipp.tools.best.log.Logger;
+import com.philipp.tools.common.GuidGenerator;
+import com.philipp.tools.common.Statics;
+import com.philipp.tools.common.log.Logger;
 
-public class ExcelOutput implements Output {	
-	
-	private static final String VERSION = "1.0.0.1";
-	
+public class ExcelOutput implements Output {
+
 	private File file;
 	private Workbook wb;
-	private int counter = 0;
+	private int counter = 0;		
 	
-	public static void main(String[] args) {
-		Logger.log("ADO SQL EXCEL PLUGIN v" + VERSION + " for ADO SQL SHELL v1.1.x.x");
+	public static final String HANDLER_GUID = "GUID";
+
+	public ExcelOutput (File file) throws IOException {		
+		this(file, false);				
 	}
-	
-	public ExcelOutput (File file) {	
-		
+
+	public ExcelOutput (File file, boolean rewrite) throws IOException {
+
 		this.file = file;
-		wb = new XSSFWorkbook();  
-				
+
+		if (!rewrite) {						
+			InputStream in = new FileInputStream(file);
+			wb = new XSSFWorkbook(in);
+			in.close();				
+		}
+		else {							
+			if (file.exists() && !file.delete()) {
+				Logger.err("Cannot delete " + file + ". Check if it's busy and unlock.");
+				throw new IOException("Cannot delete " + file + ". Check if it's busy and unlock.");
+			}																								
+			wb = new XSSFWorkbook();
+		}					
+		
 	}
 	
-	public void appendSheet (String name, Recordset rs) {
+	public void appendSheet (String name, Recordset rs, List<String> handlers) {
 		
 		String sheetName = WorkbookUtil.createSafeSheetName(name);
 		
@@ -59,6 +79,7 @@ public class ExcelOutput implements Output {
 		Sheet sheet = wb.createSheet(sheetName);
 						
 		int rowCounter = 0;
+		int columnHandlerCounter = 0;
 		Fields fs = rs.getFields();
 		Row header = sheet.createRow(rowCounter++);
 		
@@ -75,7 +96,7 @@ public class ExcelOutput implements Output {
 		XSSFColor headerColor = new XSSFColor(Color.decode("#4F81BD"));			
 		headerStyle.setFillForegroundColor(headerColor);			
 		headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);						
-		headerStyle.setFont( headerFont);
+		headerStyle.setFont(headerFont);
 		
 		XSSFCellStyle oddStyle = (XSSFCellStyle)sheet.getWorkbook().createCellStyle();	
 		XSSFColor oddColor = new XSSFColor(Color.decode("#DCE6F1"));		
@@ -108,8 +129,19 @@ public class ExcelOutput implements Output {
 	    	Cell cell = header.createCell(i);
 	    	cell.setCellValue(fs.getItem(i).getName());
 	    	cell.setCellStyle(headerStyle);
-	    }	    	    
-
+	    }	
+	    
+	    boolean handling = handlers != null && !handlers.isEmpty() ? true : false;
+	    
+	    if (handling) {
+	    	if (handlers.contains(HANDLER_GUID)) {
+	    		Cell cell = header.createCell(fs.getCount());
+	    		cell.setCellValue(HANDLER_GUID);
+	    		cell.setCellStyle(headerStyle);	
+	    		columnHandlerCounter++;
+	    	}	    	
+	    }
+	    	
 	    if (!rs.getEOF()) rs.MoveFirst();	    
 	    while (!rs.getEOF()) {
 	    	Row row = sheet.createRow(rowCounter++);
@@ -130,7 +162,7 @@ public class ExcelOutput implements Output {
 			    switch (v.getvt()) {
 			    	case Variant.VariantDate: {
 			    		Date date = v.getJavaDate();
-				    	cell.setCellValue(date != null ? DATE_FORMATTER.format(date) : "");	
+				    	cell.setCellValue(date != null ? Statics.DATE_FORMATTER.format(date) : "");	
 			    		break;
 			    	}	
 			    	case Variant.VariantShort:
@@ -149,16 +181,32 @@ public class ExcelOutput implements Output {
 			    	case Variant.VariantDouble:
 			    		cell.setCellValue(v.getDouble());
 			    		break;
-			    	default:			    		
+			    	case Variant.VariantNull:			    		
+			    		break;
+			    	default:				    		
 			    		cell.setCellValue(v + "");
 			    }			    			    	        	        	        	        	     		
 			} 
+			
+			if (handling) {
+				if (handlers.contains(HANDLER_GUID)) {
+					Cell cell = row.createCell(fs.getCount()); 
+					cell.setCellValue(GuidGenerator.getCustomGuid(22, true));	
+					
+					if (rowCounter % 2 != 0) {				
+						cell.setCellStyle(evenStyle);
+					}
+					else {
+						cell.setCellStyle(oddStyle);
+					}					
+				}													
+			}												
 			rs.MoveNext();
-	    } 
+	    }	    	   
 	    
-	    for (int i = 0; i < fs.getCount(); i++) {
+	    for (int i = 0; i < fs.getCount() + columnHandlerCounter; i++) {
 	    	sheet.autoSizeColumn(i);
-	    }
+	    }	    	    
 	    	 
 	    if (fs.getCount() > 0) {
 		    XSSFCell lastCell = (XSSFCell)header.getCell(header.getLastCellNum() - 1);
@@ -177,7 +225,7 @@ public class ExcelOutput implements Output {
 
 	@Override
 	public void printRS(String id, Recordset rs) {			
-		appendSheet(id, rs);		
+		appendSheet(id, rs, null);		
 	}
 
 	@Override
@@ -190,8 +238,25 @@ public class ExcelOutput implements Output {
 	}
 
 	@Override
-	public String getVersion() {
-		return VERSION;
+	public void printRS(String id, ResultSet rs) throws SQLException {	
+		throw new UnsupportedOperationException("ExcelOutput.printRS<String, ResultSet>");
+	}
+
+	@Override
+	public void printRS(String id, List<String> rs) {
+		// TODO Auto-generated method stub	
+		throw new UnsupportedOperationException("ExcelOutput.printRS<String, List<String>>");
+	}
+
+	@Override
+	public void printRS(String id, Map<String, ?> rs) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("ExcelOutput.printRS<String, Map<String, ?>>");
+	}
+
+	@Override
+	public void printRS(String id, Recordset rs, List<String> handlers) {
+		appendSheet(id, rs, handlers);				
 	}
 
 }

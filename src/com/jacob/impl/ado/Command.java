@@ -2,12 +2,11 @@ package com.jacob.impl.ado;
 
 import com.jacob.com.*;
 
-public class Command extends Dispatch
-{
-  public Command()
-  {
-    super("ADODB.Command");
-  }
+public class Command extends Dispatch {
+
+	public Command() {
+		super("ADODB.Command");
+	}
 
 	/**
 	 * This constructor is used instead of a case operation to
@@ -15,61 +14,50 @@ public class Command extends Dispatch
 	 * in every wrapper class whose instances may be returned from
 	 * method calls wrapped in VT_DISPATCH Variants.
 	 */
-	public Command(Dispatch d)
-	{
+	public Command(Dispatch d) {
 		// take over the IDispatch pointer
 	  m_pDispatch = d.m_pDispatch;
 		// null out the input's pointer
 		d.m_pDispatch = 0;
 	}
 
-  public Variant getProperties()
-  {
+  public Variant getProperties() {
     return Dispatch.get(this, "Properties");
   }
 
-  public Connection getActiveConnection()
-  {
+  public Connection getActiveConnection() {
     return new Connection(Dispatch.get(this, "ActiveConnection").toDispatch());
   }
 
-  public void setActiveConnection(Connection ppvObject)
-  {
+  public void setActiveConnection(Connection ppvObject) {
     Dispatch.put(this, "ActiveConnection", ppvObject);
   }
 
-  public String getCommandText()
-  {
+  public String getCommandText() {
     return Dispatch.get(this, "CommandText").toString();
   }
 
-  public void setCommandText(String pbstr)
-  {
+  public void setCommandText(String pbstr) {
     Dispatch.put(this, "CommandText", pbstr);
   }
 
-  public int getCommandTimeout()
-  {
-    return Dispatch.get(this, "CommandTimeout").toInt();
+  public int getCommandTimeout() {
+    return Dispatch.get(this, "CommandTimeout").getInt();
   }
 
-  public void setCommandTimeout(int plTimeout)
-  {
+  public void setCommandTimeout(int plTimeout) {
     Dispatch.put(this, "CommandTimeout", new Variant(plTimeout));
   }
 
-  public boolean getPrepared()
-  {
-     return Dispatch.get(this, "Prepared").toBoolean();
+  public boolean getPrepared() {
+     return Dispatch.get(this, "Prepared").getBoolean();
   }
 
-  public void setPrepared(boolean pfPrepared)
-  {
+  public void setPrepared(boolean pfPrepared) {
     Dispatch.put(this, "Prepared", new Variant(pfPrepared));
   }
 
-  public Recordset Execute(Variant RecordsAffected, Variant Parameters, int Options)
-  {
+  public Recordset Execute(Variant RecordsAffected, Variant Parameters, int Options) {
     return (Recordset)Dispatch.call(this, "Execute", RecordsAffected, Parameters, new Variant(Options)).toDispatch();
   }
 
@@ -78,44 +66,36 @@ public class Command extends Dispatch
     return new Recordset(Dispatch.call(this, "Execute", dummy).toDispatch());
   }
 
-  public Variant CreateParameter(String Name, int Type, int Direction, int Size, Variant Value)
-  {
+  public Variant CreateParameter(String Name, int Type, int Direction, int Size, Variant Value) {
     return Dispatch.call(this, "CreateParameter", Name, new Variant(Type), new Variant(Direction), new Variant(Size), Value);
   }
 
   // need to wrap Parameters
-  public Variant getParameters()
-  {
+  public Variant getParameters() {
     return Dispatch.get(this, "Parameters");
   }
 
-  public void setCommandType(int plCmdType)
-  {
+  public void setCommandType(int plCmdType) {
     Dispatch.put(this, "CommandType", new Variant(plCmdType));
   }
 
-  public int getCommandType()
-  {
-    return Dispatch.get(this, "CommandType").toInt();
+  public int getCommandType() {
+    return Dispatch.get(this, "CommandType").getInt();
   }
 
-  public String getName()
-  {
+  public String getName() {
     return Dispatch.get(this, "Name").toString();
   }
 
-  public void setName(String pbstrName)
-  {
+  public void setName(String pbstrName) {
     Dispatch.put(this, "Name", pbstrName);
   }
 
-  public int getState()
-  {
-    return Dispatch.get(this, "State").toInt();
+  public int getState() {
+    return Dispatch.get(this, "State").getInt();
   }
 
-  public void Cancel()
-  {
+  public void Cancel() {
     Dispatch.call(this, "Cancel");
   }
 }

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create-releases" name="Create runnable JAR and EXE for JDBC SQL Shell">
+    <!--ANT 1.7 is required-->
+	
+	<property name="version" value="1.2.0.0"/>
+	<property name="txt-version" value="1.2.RC6"/>
+	<property name="program-name" value="jdbc-sql-shell"/>	
+	<property name="plugin-name" value="excel-poi-plugin"/>
+		
+	<property name="release.dir" value="release"/>
+	<property name="lib.dir" value="lib"/>
+	<property name="build.dir" value="build"/>
+	<property name="classes.dir" value="classes"/>
+	<property name="docs.dir" value="docs"/>	
+	<property name="launch4j.dir" location="C:/Program Files (x86)/Launch4j" />
+	
+	<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
+
+	<target name="create-releases" depends="clear-release-dir, create-run-jar">		
+		<launch4j configFile="${program-name}.xml" fileVersion="${version}" txtFileVersion="${txt-version}" productVersion="${version}" txtProductVersion="${txt-version}" outfile="${release.dir}/${program-name}.exe"  jar="${build.dir}/${program-name}.jar"/>
+		<launch4j configFile="${program-name}-x32.xml" fileVersion="${version}" txtFileVersion="${txt-version}" productVersion="${version}" txtProductVersion="${txt-version}" outfile="${release.dir}/${program-name}-x32.exe" jar="${build.dir}/${program-name}.jar"/>
+	</target>
+		
+    <target name="create-run-jar" depends="clear-build-dir, clear-release-dir, copy-release-lib">
+    	    	    	
+        <jar destfile="${build.dir}/${program-name}.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="com.philipp.tools.best.JDBCSQLShell"/>
+                <attribute name="Class-Path" value="${plugin-name}.jar  jtds-1.2.7.jar  mysql-connector-java-5.1.26-bin.jar  DBF_JDBC40.jar  sqlite-jdbc-3.7.2.jar"/>
+            </manifest>
+        	        	        	      
+        	<fileset dir="${classes.dir}">        		
+        		<exclude name="com/philipp/tools/best/db/ADO*.class" /> <!--not used in JDBC release-->
+        		<exclude name="com/philipp/tools/best/db/ADO*.class" /> <!--not used in ADO release-->
+        		<exclude name="com/philipp/tools/check/**" /> <!--not used in ADO release -->   
+        		<exclude name="com/philipp/tools/mail/**" /> <!--not used in ADO release -->
+        		<exclude name="com/philipp/tools/best/test/**" /> <!--test and beta-classes not used-->     
+        		<exclude name="com/premaservices/**" /> <!--premaservices projects not used-->
+            </fileset>        	           
+        	
+        	<zipfileset includes="org/apache/commons/lang/String*Utils.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/text/Str*.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/UnhandledException.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/exception/NestableRuntimeException.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/exception/Nestable.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        </jar>
+    </target>		
+	
+	<target name="clear-build-dir">
+			<delete failonerror="false">
+	            <fileset dir="${build.dir}">
+	            	<include name="jdbc-sql*.jar"/>	 
+				</fileset>
+	        </delete>		
+	</target>
+	
+	<target name="clear-release-dir">
+			<delete failonerror="false">
+	            <fileset dir="${release.dir}">
+	                <include name="jdbc-sql*" />
+	            </fileset>
+	        </delete>		
+	</target>	
+	
+	<target name="copy-release-lib">
+			<copy todir="${release.dir}">
+			    <fileset dir="${lib.dir}">
+			    	 <include name="jtds*.jar" />
+			    	 <include name="mysql-connector-java*.jar" />
+			    	 <include name="DBF_JDBC*.jar" />
+			    	 <include name="sqlite-jdbc*.jar" />
+				</fileset>
+			</copy>
+	</target>
+	
+</project>
+

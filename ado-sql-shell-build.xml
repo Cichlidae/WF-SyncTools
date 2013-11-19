@@ -2,10 +2,10 @@
 <project default="create-releases" name="Create runnable JAR and EXE for ADO SQL Shell">
     <!--ANT 1.7 is required-->
 	
-	<property name="version" value="1.1.0.1"/>
-	<property name="txt-version" value="1.1.RC4"/>
+	<property name="version" value="1.2.0.0"/>
+	<property name="txt-version" value="1.2.RC6"/>
 	<property name="program-name" value="ado-sql-shell"/>
-	<property name="plugin-name" value="ado-sql-*-plugin"/>
+	<property name="plugin-name" value="excel-poi-plugin"/>
 	
 	<property name="shared.dir" value="Z:/SALES/best5_tools/utils"/>
 	<property name="release.dir" value="release"/>
@@ -18,7 +18,7 @@
 	
 	<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
 	
-	<target name="remove-shared-zip">
+	<!--<target name="remove-shared-zip">
 		<delete failonerror="false">
             <fileset dir="${shared.dir}">
                 <include name="${program-name}-v${version}.zip" />
@@ -40,7 +40,7 @@
 			<zipfileset dir="${release.dir}" prefix="${program-name}"/>
 			<zipfileset dir="${docs.dir}" includes="readme.txt" prefix="${program-name}"/>
 		</zip>		
-	</target>
+	</target>-->
 	
 	<target name="create-releases" depends="clear-release-dir, create-run-jar, copy-release-lib">
 		<launch4j configFile="${program-name}-x32.xml" fileVersion="${version}" txtFileVersion="${txt-version}" productVersion="${version}" txtProductVersion="${txt-version}" outfile="${release.dir}/${program-name}-x32.exe" jar="${build.dir}/${program-name}.jar"/>
@@ -52,24 +52,31 @@
         <jar destfile="${build.dir}/${program-name}.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="com.philipp.tools.best.ADOSQLShell"/>
-                <attribute name="Class-Path" value="./ado-sql-excel-plugin.jar"/>
+                <attribute name="Class-Path" value="./${plugin-name}.jar"/>
             </manifest>
         	        	        	      
-        	<fileset dir="${classes.dir}">        		
-        		<exclude name="com/philipp/tools/best/db/VFPDriverConnector.class" /> <!--not used in ADO release-->
-        		<exclude name="com/philipp/tools/best/out/ExcelOutput.class" /> <!--included in extending lib ado-sql-excel-plugin.jar-->
-        		<exclude name="com/philipp/tools/best/test/**" /> <!--test and beta-classes not used-->        	
+        	<fileset dir="${classes.dir}">
+        		<exclude name="com/philipp/tools/best/JDBC*.class" /> <!--not used in ADO release-->
+        		<exclude name="com/philipp/tools/best/db/JDBC*.class" /> <!--not used in ADO release-->        
+        		<exclude name="com/philipp/tools/check/**" /> <!--not used in ADO release -->   
+        		<exclude name="com/philipp/tools/mail/**" /> <!--not used in ADO release -->
+        		<exclude name="com/philipp/tools/best/test/**" /> <!--test and beta-classes not used-->
+        		<exclude name="com/premaservices/**" /> <!--premaservices projects not used-->
             </fileset>
         	    
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jacob.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/String*Utils.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/text/Str*.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/UnhandledException.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/exception/NestableRuntimeException.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	<zipfileset includes="org/apache/commons/lang/exception/Nestable.class" src="${lib.dir}/commons-lang-2.6.jar"/>
         </jar>
     </target>		
 	
 	<target name="clear-build-dir">
 			<delete failonerror="false">
 	            <fileset dir="${build.dir}">
-	            	<include name="ado-sql-*.jar"/>
-	            	<exclude name="ado-sql-*-plugin.jar"/>
+	            	<include name="ado-sql*.jar"/>	         
 				</fileset>
 	        </delete>		
 	</target>
@@ -77,7 +84,7 @@
 	<target name="clear-release-dir">
 			<delete failonerror="false">
 	            <fileset dir="${release.dir}">
-	                <include name="**/*" />
+	                <include name="**/ado-sql*" />
 	            </fileset>
 	        </delete>		
 	</target>
@@ -87,31 +94,29 @@
 			    <fileset dir="${lib.dir}">
 			    	 <include name="jacob*.dll" />
 				</fileset>
-				<fileset dir="${build.dir}">
-			    	 <include name="${plugin-name}.jar" />
-				</fileset>
 			</copy>
 	</target>
 	
-	<target name="create-poi-jar-to-release">
+<!--	<target name="create-poi-jar-to-release">
 		  <mkdir dir="${temp.dir}"/>
 			  <unzip dest="${temp.dir}">
 			        <fileset dir="${lib.dir}">
-			            <include name="poi*.jar" />
+			            <include name="poi-3.9*.jar" />
+			        	<include name="poi-ooxml*3.9*.jar" />
 			        	<include name="xmlbeans*.jar" />
 			        	<include name="dom4j*.jar" />
 			        </fileset>    
 			  </unzip>
 			 	
-		 <jar destfile="${build.dir}/ado-sql-excel-plugin.jar">
+		 <jar destfile="${build.dir}/${plugin-name}.jar">
 		    	<fileset dir="${temp.dir}"/>		
 		 	    <fileset dir="${classes.dir}">
-		 	    		<include name="com/philipp/tools/best/out/ExcelOutput.class"/> <!--extending feature: output to Excel-->
+		 	    		<include name="com/philipp/tools/best/out/ExcelOutput.class"/> 
 		 	    </fileset>
 		</jar>
 		
 		<delete failonerror="false" dir="${temp.dir}" />
-	</target>
+	</target> -->
 	
 </project>
 

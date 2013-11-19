@@ -2,10 +2,9 @@ package com.jacob.impl.ado;
 
 import com.jacob.com.*;
 
-public class Connection extends Dispatch
-{
-  public Connection()
-  {
+public class Connection extends Dispatch {
+	
+  public Connection() {
     super("ADODB.Connection");
   }
 
@@ -15,8 +14,7 @@ public class Connection extends Dispatch
 	 * in every wrapper class whose instances may be returned from
 	 * method calls wrapped in VT_DISPATCH Variants.
 	 */
-	public Connection(Dispatch d)
-	{
+	public Connection(Dispatch d) {
 		// take over the IDispatch pointer
 	  m_pDispatch = d.m_pDispatch;
 		// null out the input's pointer
@@ -24,159 +22,132 @@ public class Connection extends Dispatch
 	}
 
   // need to wrap Properties
-  public Variant getProperties()
-  {
+  public Variant getProperties() {
     return Dispatch.get(this, "Properties");
   }
 
-  public String getConnectionString()
-  {
+  public String getConnectionString() {
     return Dispatch.get(this, "ConnectionString").toString();
   }
 
-  public void setConnectionString(String pbstr)
-  {
+  public void setConnectionString(String pbstr) {
     Dispatch.put(this, "ConnectionString", pbstr);
   }
 
-  public int getCommandTimeout()
-  {
-    return Dispatch.get(this, "CommandTimeout").toInt();
+  public int getCommandTimeout() {
+    return Dispatch.get(this, "CommandTimeout").getInt();
   }
 
-  public void setCommandTimeout(int plTimeout)
-  {
+  public void setCommandTimeout(int plTimeout) {
     Dispatch.put(this, "CommandTimeout", new Variant(plTimeout));
   }
 
-  public int getConnectionTimeout()
-  {
-    return Dispatch.get(this, "ConnectionTimeout").toInt();
+  public int getConnectionTimeout() {
+    return Dispatch.get(this, "ConnectionTimeout").getInt();
   }
 
-  public void setConnectionTimeout(int plTimeout)
-  {
+  public void setConnectionTimeout(int plTimeout) {
     Dispatch.put(this, "ConnectionTimeout", new Variant(plTimeout));
   }
 
-  public String getVersion()
-  {
+  public String getVersion() {
     return Dispatch.get(this, "Version").toString();
   }
 
-  public void Close()
-  {
+  public void Close() {
     Dispatch.call(this, "Close");
   }
 
   // how to deal with RecordsAffected being output?
-  public Variant Execute(String CommandText, Variant RecordsAffected, int Options)
-  {
+  public Variant Execute(String CommandText, Variant RecordsAffected, int Options) {
     return Dispatch.call(this, CommandText, RecordsAffected, new Variant(Options));
   }
 
-  public int BeginTrans()
-  {
-    return Dispatch.call(this, "BeginTrans").toInt();
+  public int BeginTrans() {
+    return Dispatch.call(this, "BeginTrans").getInt();
   }
 
-  public void CommitTrans()
-  {
+  public void CommitTrans() {
     Dispatch.call(this, "CommitTrans");
   }
 
-  public void RollbackTrans()
-  {
+  public void RollbackTrans() {
     Dispatch.call(this, "RollbackTrans");
   }
 
-  public void Open(String ConnectionString, String UserID, String Password, int Options)
-  {
+  public void Open(String ConnectionString, String UserID, String Password, int Options) {
     Dispatch.call(this, "Open", ConnectionString, UserID, Password, new Variant(Options));
   }
 
-  public void Open()
-  {
+  public void Open() {
     Dispatch.call(this, "Open");
   }
 
-  public Variant getErrors()
-  {
+  public Variant getErrors() {
     return Dispatch.get(this, "Errors");
   }
 
-  public String getDefaultDatabase()
-  {
+  public String getDefaultDatabase() {
     return Dispatch.get(this, "DefaultDatabase").toString();
   }
 
-  public void setDefaultDatabase(String pbstr)
-  {
+  public void setDefaultDatabase(String pbstr) {
     Dispatch.put(this, "DefaultDatabase", pbstr);
   }
 
-  public int getIsolationLevel()
-  {
-    return Dispatch.get(this, "IsolationLevel").toInt();
+  public int getIsolationLevel() {
+    return Dispatch.get(this, "IsolationLevel").getInt();
   }
 
-  public void setIsolationLevel(int Level)
-  {
+  public void setIsolationLevel(int Level) {
     Dispatch.put(this, "IsolationLevel", new Variant(Level));
   }
 
-  public int getAttributes()
-  {
-    return Dispatch.get(this, "Attributes").toInt();
+  public int getAttributes() {
+    return Dispatch.get(this, "Attributes").getInt();
   }
 
-  public void setAttributes(int plAttr)
-  {
+  public void setAttributes(int plAttr) {
     Dispatch.put(this, "Attributes", new Variant(plAttr));
   }
 
-  public int getCursorLocation()
-  {
-    return Dispatch.get(this, "CursorLocation").toInt();
+  public int getCursorLocation() {
+    return Dispatch.get(this, "CursorLocation").getInt();
   }
 
-  public void setCursorLocation(int plCursorLoc)
-  {
+  public void setCursorLocation(int plCursorLoc) {
     Dispatch.put(this, "CursorLocation", new Variant(plCursorLoc));
   }
 
-  public int getMode()
-  {
-    return Dispatch.get(this, "Mode").toInt();
+  public int getMode() {
+    return Dispatch.get(this, "Mode").getInt();
   }
 
-  public void setMode(int plMode)
-  {
+  public void setMode(int plMode) {
     Dispatch.put(this, "Mode", new Variant(plMode));
   }
 
-  public String getProvider()
-  {
+  public String getProvider() {
     return Dispatch.get(this, "Provider").toString();
   }
 
-  public void setProvider(String pbstr)
-  {
+  public void setProvider(String pbstr) {
     Dispatch.put(this, "Provider", pbstr);
   }
 
-  public int getState()
-  {
-    return Dispatch.get(this, "State").toInt();
+  public int getState() {
+    return Dispatch.get(this, "State").getInt();
+  }
+  
+  public Variant OpenSchema(int Schema) {	  	  	 
+    return Dispatch.call(this, "OpenSchema", new Variant(Schema));
   }
 
-  public Variant OpenSchema(int Schema, Variant Restrictions, Variant SchemaID)
-  {
+  public Variant OpenSchema(int Schema, Variant Restrictions, Variant SchemaID) {
     return Dispatch.call(this, "OpenSchema", new Variant(Schema), Restrictions, SchemaID);
   }
 
-  public void Cancel()
-  {
+  public void Cancel() {
     Dispatch.call(this, "Cancel");
   }
 }

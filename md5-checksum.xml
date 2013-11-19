@@ -1,0 +1,41 @@
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>console</headerType>
+  <jar>D:\JavaSoft\BestVisualTools_x32\SyncTools\build\md5-checksum.jar</jar>
+  <outfile>D:\JavaSoft\BestVisualTools_x32\SyncTools\release\md5-checksum.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <manifest></manifest>
+  <icon></icon>
+  <jre>
+    <path></path>
+    <bundledJre64Bit>false</bundledJre64Bit>
+    <minVersion>1.6.0_31</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+  </jre>
+  <versionInfo>
+    <fileVersion>1.0.0.0</fileVersion>
+    <txtFileVersion>1.0.RC0</txtFileVersion>
+    <fileDescription>MD5 Checksum</fileDescription>
+    <copyright>Weitnauer-Philipp Inc.</copyright>
+    <productVersion>1.0.0.0</productVersion>
+    <txtProductVersion>1.0.RC0</txtProductVersion>
+    <productName>MD5 CHECKSUM SHELL</productName>
+    <companyName>Weitnauer-Philipp Inc.</companyName>
+    <internalName>MD5 CHECKSUM SHELL</internalName>
+    <originalFilename>md5-checksum.exe</originalFilename>
+  </versionInfo>
+  <messages>
+    <startupErr>An error occurred while starting the application.</startupErr>
+    <bundledJreErr>This application was configured to use a bundled Java Runtime Environment but the runtime is missing or corrupted.</bundledJreErr>
+    <jreVersionErr>This application requires a Java Runtime Environment 6 ot higher.</jreVersionErr>
+    <launcherErr>The registry refers to a nonexistent Java Runtime Environment installation or the runtime is corrupted.</launcherErr>
+    <instanceAlreadyExistsMsg>An application instance is already running.</instanceAlreadyExistsMsg>
+  </messages>
+</launch4jConfig>

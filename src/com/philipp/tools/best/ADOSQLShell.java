@@ -11,69 +11,86 @@ import com.jacob.impl.ado.CommandTypeEnum;
 import com.jacob.impl.ado.Connection;
 import com.jacob.impl.ado.Recordset;
 
-//import java.util.ArrayList;
-//import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Stack;
 
 import com.philipp.tools.best.db.ADOConnector;
+import com.philipp.tools.best.db.ADOMetaDataExtractor;
+import com.philipp.tools.best.in.ExcelCommand;
+import com.philipp.tools.best.in.Input;
+import com.philipp.tools.best.in.InputListener;
+import com.philipp.tools.best.in.MSSQLCommand;
+import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
-import com.philipp.tools.best.log.Logger;
 import com.philipp.tools.best.out.LoggerOutput;
 import com.philipp.tools.best.out.Output;
+import com.philipp.tools.common.log.Logger;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.converters.FileConverter;
 
 public class ADOSQLShell {
-	
-	public static final String VERSION = "1.1.0.1";
+
+	public static final String VERSION = "1.2.RC6";
 	public static final String DESCRIPTION = "ADO SQL SHELL v" + VERSION;
 
 	private final static int IN_PROCESS = 0;
 	private final static int FAILED = 1;
 	private final static int TERMINATED = 2;
-	
+
 	private static int STATUS = IN_PROCESS;	
-	
+
 	private static JCommander commander;
-	
+
 	private static VFPCommand vfpCommand = new VFPCommand();
-	
-	//@Parameter(description="Full qualified foxpro database name (*.dbc)") 
-	//private List<String> parameters = new ArrayList<String>(); 
+	private static ExcelCommand excelCommand = new ExcelCommand();
+	private static MSSQLCommand mssqlCommand = new MSSQLCommand();
 
 	@Parameter(names = { "-v", "-verbose"}, description = "STD.ERR logging on/off") 
 	private boolean verbose = false;
-	
-	@Parameter(names = "-xlsx", converter = FileConverter.class, description = "Excel file to output (need external poi libs)")
+
+	@Parameter(names = "-xlsx", converter = FileConverter.class, description = "Excel file to output (needs excel-io-plugin.jar); input excel file if '-input' flag presents")
 	private File excel;
-	
-	@Parameter(names = {"-help", "-?"}, help = true, hidden = true) 
+
+	@Parameter(names = "-rewrite", description = "Flag if excel output (always create new file; used only with '-xlsx')") 
+	private boolean rewrite = false;
+
+	@Parameter(names = "-input", description = "Flag marked excel input (used only with '-xlsx')", hidden = true) 
+	private boolean input = false;
+
+	@Parameter(names = {"-help", "-?"}, description = "Help", help = true) 
 	private boolean help; 
-	
+
 	@Parameter(names = "-version", description = "Product version") 
 	private boolean version;
-	
+
+	private Connection connection = null;
 	private Output out = new LoggerOutput();
-	
+	private Input<String> in = null;
+
 	private Stack<String> commandStack = new Stack<String>();
-		
+
 	private ADOSQLShell (String[] args) {
-		//commander = new JCommander(this, args);
 		commander = new JCommander(this);
-		commander.addCommand("vfp", vfpCommand);
+		commander.addCommand(VFPCommand.NAME, vfpCommand);
+		commander.addCommand(ExcelCommand.NAME, excelCommand);
+		commander.addCommand(MSSQLCommand.NAME, mssqlCommand);
 		commander.parse(args);
 	}
 		
 	/**
 	 * @param args
 	 */
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {	
 		
-		File db = null;			
+		File db = null;		
+		StdinCommand incom = null;
 		
-		ADOSQLShell manager = new ADOSQLShell(args);
+		final ADOSQLShell manager = new ADOSQLShell(args);
 		
 		if (manager.help) {
 			commander.usage();
@@ -98,22 +115,28 @@ public class ADOSQLShell {
 			return;
 		}	
 			
-		if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo("vfp") == 0) {		
+		if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(VFPCommand.NAME) == 0) {	
+			incom = vfpCommand;
 			db = new File(vfpCommand.getDbc().get(0)); 
 			if (!db.exists()) {
-				Logger.err("Such VFP database file not exists! Check correctness of path or filename.");
+				Logger.err("Such VFP database file doesn't exist! Check correctness of path or filename.");
 				System.exit(1);
 				return;
-			}		
-		}		
-		/*if (manager.parameters.size() > 0) {											
-			db = new File(manager.parameters.get(0)); 
+			}					
+		}	
+		else if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(ExcelCommand.NAME) == 0) {
+			incom = excelCommand;
+			db = new File(excelCommand.getOnlyXlsx()); 
 			if (!db.exists()) {
-				Logger.err("Such database file not exists! Check correctness of path or filename.");
+				Logger.err("Such excel file doesn't exist! Check correctness of path or filename.");
 				System.exit(1);
 				return;
-			}
-		}*/
+			}										
+		}
+		else if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(MSSQLCommand.NAME) == 0) {
+			incom = mssqlCommand;
+			throw new UnsupportedOperationException("Command 'mssql' not supported yet.");			
+		}
 		else {
 			Logger.err("Required parameters not found: database url!");
 			Logger.err("");
@@ -122,48 +145,71 @@ public class ADOSQLShell {
 			return;
 		}
 		
-		Logger.debug(DESCRIPTION);			
+		Logger.debug(DESCRIPTION);
 		
-		if (manager.excel != null) {
+		if (manager.excel != null) {						
 			if (!new File(manager.excel.getParent()).exists()) {
-				Logger.err("Dir for " + manager.excel + " doesn't exist.");				
-			}
-			else if (manager.excel.exists() && !manager.excel.isFile()) {
-				Logger.err(manager.excel + " is not a file.");
+				Logger.err("Dir for " + manager.excel + " doesn't exist.");					
 			}
 			else {
-				if (manager.excel.exists()) {	
-					if (!manager.excel.delete()) {
-						Logger.err("Cannot delete " + manager.excel + ". Check if it's busy and unlock.");
-					}																				
+				if (!manager.excel.exists() && manager.input) {
+					Logger.err(manager.excel + " does not exist.");
+					System.exit(1);
+					return;
 				}
-				try {
-					Class<?> outClass = Class.forName("com.philipp.tools.best.out.ExcelOutput");
-					Constructor<?> c = outClass.getConstructor(new Class[]{File.class});
-					manager.out = (Output)c.newInstance(manager.excel);
-					Logger.debug("USE ADO SQL EXCEL PLUGIN v" + manager.out.getVersion());
+				else if (!manager.excel.exists() && !manager.rewrite) {
+					manager.rewrite = true;					
+				}	
+				if (manager.excel.exists() && !manager.excel.isFile()) {
+					Logger.err(manager.excel + " is not a file.");
 				}
-				catch (Exception e) {
-					Logger.err("Cannot use -xlsx out. Required poi excel libs not found.");
-					e.printStackTrace();
-				}					
+				else if (manager.input) {
+					try {
+						Class<?> inClass = Class.forName("com.philipp.tools.best.in.ExcelInput");
+						Constructor<?> c = inClass.getConstructor(new Class[]{File.class});
+						manager.in = (Input<String>)c.newInstance(manager.excel);
+						manager.in.addListener(
+							new InputListener<String> () {
+								@Override
+								public void doEvent(String[] arg) {
+									manager.doQuery(arg[0], arg[1]);									
+								}									
+							}
+						);												
+						Logger.debug("USE EXCEL IO PLUGIN");
+					}
+					catch (Exception e) {
+						Logger.err("Cannot use -xlsx in. Required poi excel libs not found.");
+						e.printStackTrace();
+					}
+				}				
+				else {
+					try {
+						Class<?> outClass = Class.forName("com.philipp.tools.best.out.ExcelOutput");
+						Constructor<?> c = outClass.getConstructor(new Class[]{File.class, boolean.class});
+						manager.out = (Output)c.newInstance(manager.excel, manager.rewrite);
+						Logger.debug("USE EXCEL IO PLUGIN");
+					}			
+					catch (Exception e) {
+						Logger.err("Cannot use -xlsx out. Required poi excel libs not found.");
+						e.printStackTrace();
+					}					
+				}
 			}
-		}			
+		}
 		
 		Logger.debug("file.encoding: " + System.getProperty("file.encoding","undefined"));
 		Logger.debug("console.encoding: " + System.getProperty("console.encoding","undefined"));
-		
-		manager.process(db);		
+								
+		System.exit(manager.process(incom));		
 	}
 	
-	private void process (File db) {
+	private int process (StdinCommand incom) {
 		
-		Connection connection = null;	
 		int exit = 0;
 		
-		try {
-			connection = ADOConnector.getDBFADOConnection(db.getAbsolutePath());
-			Logger.debug("Driver version: " + connection.getVersion());
+		try {		
+			openConnection(incom);
 	        Logger.debug("Database opened.");
 	   
 	        BufferedReader scan =
@@ -175,8 +221,9 @@ public class ADOSQLShell {
 		        	STATUS = TERMINATED;
 		        	continue;
 		        }
-		        try {			        			        			       
-		        	doQuery(connection, s);		        
+		        try {		
+		        	if (in != null) in.convert(s, incom);
+		        	else doQuery(s, null);		        
 		        }
 		        catch (Exception e) {
 		        	STATUS = FAILED;
@@ -193,7 +240,7 @@ public class ADOSQLShell {
             exit = 1;
         }	
 		finally {
-			if (connection != null) connection.Close();
+			closeConnection();
 			try {
 				out.flushAll();
 				Logger.debug("Flush out done.");
@@ -203,10 +250,21 @@ public class ADOSQLShell {
 				e.printStackTrace();			
 			}
 		}
-		 System.exit(exit);
+		return exit;
 	}
 	
-	private void doQuery (Connection connection, String sql) {
+	private void openConnection (StdinCommand incom) {
+		
+		connection = ADOConnector.getADOConnection(incom);
+		Logger.debug("Driver version: " + connection.getVersion());
+		
+	}
+	
+	private void closeConnection () {	
+		if (connection != null) connection.Close();
+	}
+	
+	private void doQuery (String sql, String table) {
 					
 		sql = sql.trim();
 		if ("".equals(sql)) return;
@@ -215,48 +273,118 @@ public class ADOSQLShell {
 		
 		Command comm = new Command();
 		comm.setActiveConnection(connection);
-		comm.setCommandType(CommandTypeEnum.adCmdText);
-		comm.setCommandText(sql);
+		comm.setCommandType(CommandTypeEnum.adCmdText);		
 		
-		switch (checkResultSelect(sql)) {
-			case COMMENT: commandStack.push(sql); break;
-			case UPDATE: comm.Execute(); break;
-			case SELECT:
-			default: {
-				Recordset rs = comm.Execute();	
-				String note = DEFAULT_RESULT_NAME;
-				if (!commandStack.empty()) { 
-					note = parseComment(commandStack.pop());
-				}	
-				if (note != null) out.printRS(note, rs);
-				commandStack.clear();
+		while (true) {
+			comm.setCommandText(sql);
+			switch (checkResultSelect(sql)) {
+				case COMMENT: {
+					String[] matched = matchComment(sql);
+					if (matched != null) {						
+						commandStack.push(COMMENT_MARKER + matched[0]);
+						if (matched[1] != null) {
+							sql = matched[1];
+							continue;
+						}			
+						break;
+					}	
+					else {									
+						commandStack.push(sql);
+					}
+					break;
+				}
+				case DROP: {	
+					if (exists(table)) {					
+						comm.Execute();					
+					}	
+					break;
+				}
+				case UPDATE: comm.Execute(); break;
+				case SELECT:
+				default: {
+					Recordset rs = comm.Execute();	
+					String note = DEFAULT_RESULT_NAME;
+					List<String> handlers = new ArrayList<String>(0);
+					
+					if (!commandStack.empty()) { 
+						note = parseComment(commandStack.pop(), handlers);					
+					}
+					
+					if (!cancelComment(note)) out.printRS(note, rs, handlers);
+					commandStack.clear();
+				}
 			}
-		}			
+			break;
+		}
 		comm.Cancel();
 	}
-	
+
 	private static final int COMMENT = 0;
 	private static final int SELECT = 1;
 	private static final int UPDATE = 2;
+	private static final int DROP = 3;
+
+	private static final String DEFAULT_RESULT_NAME = "DEFAULT";
 	
-	private static final String DEFAULT_RESULT_NAME = "SQLR";
-		
-	private static int checkResultSelect (String sql) {		
-		String uSQL = sql.toUpperCase().trim();						
-		return uSQL.startsWith("NOTE") || uSQL.startsWith("*") ? COMMENT : (
-					uSQL.startsWith("SELECT") && uSQL.indexOf("INTO CURSOR") == -1 ? SELECT : UPDATE				
+	private static final String COMMENT_MARKER = "--";
+	public static final String HANDLER_MARKER = "@@";
+
+	private static int checkResultSelect (String sql) {
+		String uSQL = sql.toUpperCase().trim();	
+		return uSQL.startsWith(COMMENT_MARKER) ? COMMENT : (
+					uSQL.startsWith("SELECT") && uSQL.indexOf("INTO CURSOR") == -1 ? SELECT : (
+							uSQL.startsWith("DROP") ? DROP : UPDATE
+					)				
 			   );										
 	}
 	
-	private static String parseComment (String sql) {		
-		if (sql == null)  return DEFAULT_RESULT_NAME;
+	private String[] matchComment (String sql) {
+		
+		String[] result = null;		
+		String uSQL = sql.trim();
+	
+		if (uSQL.matches(COMMENT_MARKER + ".+" + COMMENT_MARKER + ".*")) {	
+			result = Arrays.copyOfRange(uSQL.split("--"), 1, 3);
+		}					
+		return result;		
+	}
+	
+	private String parseComment (String sql, List<String> handlers) {	
+			
 		String str = sql.trim().toUpperCase();
-		if (!str.startsWith("NOTE ") && !str.startsWith("* ")) return DEFAULT_RESULT_NAME;			
-		str = str.substring(str.indexOf(' '));
-		if (str.length() < 2) return DEFAULT_RESULT_NAME;
-		str = str.substring(1);
-		if (str.charAt(0) == '!') return null;	
-		return str.trim();
+		
+		if (!str.startsWith("--")) return DEFAULT_RESULT_NAME;
+		str = str.substring(2).trim();
+		
+		if (str.length() == 0) return DEFAULT_RESULT_NAME;
+		
+		if (handlers != null) {			
+			String[] pstr = str.split(HANDLER_MARKER);
+			str = pstr[0];
+			for (int i = 1; i < pstr.length; i++) {
+				String p = pstr[i];
+				int space = p.indexOf(' ');
+				if (space == -1) str += p;
+				else {
+					str += p.substring(space).trim();
+					handlers.add(p.substring(0, space));					
+				}
+			}	
+		}				
+		return str;
+	}
+	
+	private boolean cancelComment (String comment) {
+		if (!(out instanceof LoggerOutput)) {
+			if (comment.charAt(0) == '!') return true;
+		}
+		return false;
+	}
+	
+	private boolean exists (String table) {	
+		List<String> tables = new ADOMetaDataExtractor(connection).getTables("");
+		if (tables.contains(table)) return true;		
+		return false;
 	}
 
 }

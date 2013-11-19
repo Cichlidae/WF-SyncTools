@@ -1,7 +1,10 @@
 package com.philipp.tools.best.db;
 
 import com.jacob.impl.ado.Connection;
-import com.philipp.tools.best.log.Logger;
+import com.philipp.tools.best.in.ExcelCommand;
+import com.philipp.tools.best.in.MSSQLCommand;
+import com.philipp.tools.best.in.StdinCommand;
+import com.philipp.tools.best.in.VFPCommand;
 
 public class ADOConnector {
 	
@@ -43,19 +46,20 @@ public class ADOConnector {
 		return c;		
 	}
 	
-	public static Connection getADOConnection (String databasePath) throws IllegalArgumentException {
+	public static Connection getADOConnection (StdinCommand incom) throws IllegalArgumentException {
 		
-		int idx = databasePath.lastIndexOf('.');
-		if (idx < 0) throw new IllegalArgumentException("Incorrect database name. Cannot recognize extention (DBC or XSLX).");
-		String exception = databasePath.substring(idx+1).trim();
-		if (exception.toLowerCase().compareTo("dbc") == 0) {
-			return ADOConnector.getDBFADOConnection(databasePath);
+		if (incom instanceof VFPCommand) {
+			return ADOConnector.getDBFADOConnection(((VFPCommand)incom).getOnlyDbc());
 		}
-		else if (exception.toLowerCase().compareTo("xlsx") == 0) {
-			return ADOConnector.getExcelADOConnection(databasePath);
-		}		
+		else if (incom instanceof ExcelCommand) {
+			return ADOConnector.getExcelADOConnection(((ExcelCommand)incom).getOnlyXlsx());
+		}
+		else if (incom instanceof MSSQLCommand) {
+			MSSQLCommand c = (MSSQLCommand)incom;
+			return ADOConnector.getMSSQLADOConnection(c.getDataSource(), c.getOnlyCatalog(), c.getWorkstationId());
+		}			
 		else {
-			throw new IllegalArgumentException("Unrecognized database type (need to be VFP *.DBC or Excel *.XLSX.");
+			throw new IllegalArgumentException("Unrecognized database type (need to be VFP *.DBC or Excel *.XLSX or MSSQL initial catalog.");
 		}
 	}
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="release-plugin" name="Create JAR of EXCEL-POI-PLUGIN">
+    <!--ANT 1.7 is required-->
+	
+	<property name="plugin-name" value="excel-poi-plugin"/>
+	
+	<property name="release.dir" value="release"/>
+	<property name="lib.dir" value="lib"/>
+	<property name="build.dir" value="build"/>
+	<property name="temp.dir" value="${release.dir}/temp"/>
+		   
+	<target name="clear-build-dir">
+			<delete failonerror="false">
+	            <fileset dir="${build.dir}">	
+	            	<include name="**/${plugin-name}.jar" />
+				</fileset>
+	        </delete>		
+	</target>
+	
+	<target name="clear-release-dir">
+			<delete failonerror="false">
+	            <fileset dir="${release.dir}">	   
+	            	<include name="**/${plugin-name}.jar" />
+	            </fileset>
+	        </delete>		
+	</target>
+	
+	<target name="release-plugin" depends="clear-build-dir, clear-release-dir">
+		  <mkdir dir="${temp.dir}"/>
+			  <unzip dest="${temp.dir}">
+			        <fileset dir="${lib.dir}">
+			            <include name="poi-3.9*.jar" />
+			        	<include name="poi-ooxml*3.9*.jar" />
+			        	<include name="xmlbeans*.jar" />
+			        	<include name="dom4j*.jar" />
+			        </fileset>    
+			  </unzip>
+			 	
+		 <jar destfile="${build.dir}/${plugin-name}.jar">
+		    	<fileset dir="${temp.dir}"/>		 	  
+		</jar>
+		
+		<delete failonerror="false" dir="${temp.dir}" />
+		
+		<copy todir="${release.dir}">			
+				<fileset dir="${build.dir}">
+			    	 <include name="${plugin-name}.jar" />
+				</fileset>
+		</copy>
+		
+	</target>
+	
+</project>
+
