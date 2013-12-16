@@ -91,16 +91,17 @@ public class QueryBridge {
 			else if (value instanceof Date) {
 				if (c instanceof VFPCommand) {
 					Date date = (Date)value; 										
-					sql += "{d'" + Statics.DATE_FORMATTER.format(date) + "},";				
+					sql += "{d'" + Statics.DATE_FORMATTER.format(date) + "'},";				
 				}
 				else {
-					sql += value + ",";
+					sql += "'" + value + "',";
 				}								
 			}
 			else if (value instanceof Blank) {
 				switch (types.get(i)) {					
 					case STRING: sql += "'',"; break;
 					case INTEGER:
+					case DATE: sql += "{d'1970-01-01'},"; break;	
 					case DOUBLE: sql += "0,"; break;	
 					case BOOLEAN:		
 					case NONE:	

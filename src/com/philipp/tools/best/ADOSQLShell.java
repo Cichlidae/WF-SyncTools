@@ -12,9 +12,10 @@ import com.jacob.impl.ado.Connection;
 import com.jacob.impl.ado.Recordset;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.philipp.tools.best.db.ADOConnector;
 import com.philipp.tools.best.db.ADOMetaDataExtractor;
@@ -34,7 +35,7 @@ import com.beust.jcommander.converters.FileConverter;
 
 public class ADOSQLShell {
 
-	public static final String VERSION = "1.2.RC6";
+	public static final String VERSION = "1.2.RC7";
 	public static final String DESCRIPTION = "ADO SQL SHELL v" + VERSION;
 
 	private final static int IN_PROCESS = 0;
@@ -103,22 +104,23 @@ public class ADOSQLShell {
 			System.exit(0);
 			return;
 		}
-		
+
 		if (manager.verbose) {
 			Logger.DEBUG_ON = true;
 		}
-						
+
 		String jvmArch = System.getProperty("sun.arch.data.model");
 		if (jvmArch.contains("64")) {
 			Logger.err("You have JVM 64-bit installed by default, but it needs JVM 32-bit for correct work.");
 			System.exit(1);
 			return;
-		}	
-			
+		}
+
 		if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(VFPCommand.NAME) == 0) {	
 			incom = vfpCommand;
 			db = new File(vfpCommand.getDbc().get(0)); 
 			if (!db.exists()) {
+				Logger.err(db.getAbsolutePath());
 				Logger.err("Such VFP database file doesn't exist! Check correctness of path or filename.");
 				System.exit(1);
 				return;
@@ -128,6 +130,7 @@ public class ADOSQLShell {
 			incom = excelCommand;
 			db = new File(excelCommand.getOnlyXlsx()); 
 			if (!db.exists()) {
+				Logger.err(db.getAbsolutePath());
 				Logger.err("Such excel file doesn't exist! Check correctness of path or filename.");
 				System.exit(1);
 				return;
@@ -135,7 +138,6 @@ public class ADOSQLShell {
 		}
 		else if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(MSSQLCommand.NAME) == 0) {
 			incom = mssqlCommand;
-			throw new UnsupportedOperationException("Command 'mssql' not supported yet.");			
 		}
 		else {
 			Logger.err("Required parameters not found: database url!");
@@ -172,7 +174,10 @@ public class ADOSQLShell {
 							new InputListener<String> () {
 								@Override
 								public void doEvent(String[] arg) {
-									manager.doQuery(arg[0], arg[1]);									
+									try {
+										manager.doQuery(arg[0], arg[1]);
+									}
+									catch (Exception e) {}
 								}									
 							}
 						);												
@@ -264,7 +269,7 @@ public class ADOSQLShell {
 		if (connection != null) connection.Close();
 	}
 	
-	private void doQuery (String sql, String table) {
+	private void doQuery (String sql, String table) throws Exception {
 					
 		sql = sql.trim();
 		if ("".equals(sql)) return;
@@ -337,18 +342,23 @@ public class ADOSQLShell {
 					)				
 			   );										
 	}
-	
+
 	private String[] matchComment (String sql) {
 		
-		String[] result = null;		
+		String[] result = new String[2];		
 		String uSQL = sql.trim();
 	
 		if (uSQL.matches(COMMENT_MARKER + ".+" + COMMENT_MARKER + ".*")) {	
-			result = Arrays.copyOfRange(uSQL.split("--"), 1, 3);
+			String source = uSQL.substring(COMMENT_MARKER.length());
+			int idx = source.indexOf(COMMENT_MARKER);				
+			result[0] = source.substring(0, idx);
+			idx += COMMENT_MARKER.length();
+			if (idx < source.length())			
+				result[1] = source.substring(idx);
 		}					
 		return result;		
 	}
-	
+
 	private String parseComment (String sql, List<String> handlers) {	
 			
 		String str = sql.trim().toUpperCase();
@@ -359,17 +369,17 @@ public class ADOSQLShell {
 		if (str.length() == 0) return DEFAULT_RESULT_NAME;
 		
 		if (handlers != null) {			
-			String[] pstr = str.split(HANDLER_MARKER);
-			str = pstr[0];
-			for (int i = 1; i < pstr.length; i++) {
-				String p = pstr[i];
-				int space = p.indexOf(' ');
-				if (space == -1) str += p;
-				else {
-					str += p.substring(space).trim();
-					handlers.add(p.substring(0, space));					
+			String[] pstr = StringUtils.split(str);
+			str = "";
+			for (String s : pstr) {
+				if (s.startsWith(HANDLER_MARKER)) {
+					handlers.add(s.substring(HANDLER_MARKER.length()));					
 				}
-			}	
+				else {
+					str += s;
+				}
+				Logger.debug(s);
+			}		
 		}				
 		return str;
 	}

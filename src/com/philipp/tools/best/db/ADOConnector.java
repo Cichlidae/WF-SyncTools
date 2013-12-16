@@ -25,7 +25,7 @@ public class ADOConnector {
 	public static Connection getExcelADOConnection (String filePath) {
 			
 		String url = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + filePath +
-				     ";Extended Properties='Excel 12.0;HDR=Yes;IMEX=1';";
+				     ";Extended Properties='Excel 12.0;HDR=Yes;IMEX=1;READONLY=FALSE';";
 						
 		Connection c = new Connection();
 		c.setConnectionString(url);

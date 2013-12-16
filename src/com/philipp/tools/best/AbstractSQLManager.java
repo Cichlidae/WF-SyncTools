@@ -5,11 +5,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.philipp.tools.best.db.IMetaDataExtractor;
 import com.philipp.tools.best.db.IMetaFacader;
@@ -43,7 +44,7 @@ public abstract class AbstractSQLManager implements ISQLManager {
 	
 	protected abstract void closeConnection () throws SQLException;
 	
-	protected abstract void doQuery (String sql, String table) throws SQLException;
+	protected abstract void doQuery (String sql, String table) throws SQLException, IOException;
 	
 	protected abstract boolean exists (String table) throws SQLException;
 
@@ -210,13 +211,18 @@ public abstract class AbstractSQLManager implements ISQLManager {
 	
 	protected String[] matchComment (String sql) {
 		
-		String[] result = null;		
+		String[] result = new String[2];		
 		String uSQL = sql.trim();
 	
 		if (uSQL.matches(COMMENT_MARKER + ".+" + COMMENT_MARKER + ".*")) {	
-			result = Arrays.copyOfRange(uSQL.split("--"), 1, 3);
+			String source = uSQL.substring(COMMENT_MARKER.length());
+			int idx = source.indexOf(COMMENT_MARKER);				
+			result[0] = source.substring(0, idx);
+			idx += COMMENT_MARKER.length();
+			if (idx < source.length())			
+				result[1] = source.substring(idx);
 		}					
-		return result;		
+		return result;
 	}
 	
 	protected String parseComment (String sql, List<String> handlers) {	
@@ -228,19 +234,19 @@ public abstract class AbstractSQLManager implements ISQLManager {
 		
 		if (str.length() == 0) return DEFAULT_RESULT_NAME;	
 		
-		if (handlers != null) {		
-			String[] pstr = str.split(HANDLER_MARKER);
-			str = pstr[0];
-			for (int i = 1; i < pstr.length; i++) {
-				String p = pstr[i];
-				int space = p.indexOf(' ');
-				if (space == -1) str += p;
-				else {
-					str += p.substring(space).trim();
-					handlers.add(p.substring(0, space));					
+		if (handlers != null) {			
+			String[] pstr = StringUtils.split(str);
+			str = "";
+			for (String s : pstr) {
+				if (s.startsWith(HANDLER_MARKER)) {
+					handlers.add(s.substring(HANDLER_MARKER.length()));					
 				}
-			}	
-		}
+				else {
+					str += s;
+				}
+				Logger.debug(s);
+			}		
+		}	
 		return str;
 	}
 	

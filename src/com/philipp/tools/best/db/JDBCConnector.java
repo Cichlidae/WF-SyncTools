@@ -11,6 +11,7 @@ import com.philipp.tools.best.in.SQLiteCommand;
 import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
 import com.philipp.tools.best.in.XBaseCommand;
+import com.philipp.tools.best.in.XLSQLCommand;
 import com.philipp.tools.common.log.Logger;
 
 public class JDBCConnector {
@@ -85,11 +86,25 @@ public class JDBCConnector {
 			}			
 		}		 				
 		return  DriverManager.getConnection(url);	
+
+	}
+
+	public static Connection getXLSQLConnection (String databasePath)throws SQLException {
+
+		try {
+			Class.forName("com.nilostep.xlsql.jdbc.xlDriver");
+		}
+		catch (ClassNotFoundException e) {
+			throw new SQLException ("Database jdbc driver 'com.nilostep.xlsql.jdbc.xlDriver' not found.");
+		}
 		
+		String url = "jdbc:nilostep:excel:" + databasePath;
+		Logger.debug(url);
+		return DriverManager.getConnection(url);
 	}
 
 	public static Connection getJDBCConnection (StdinCommand incom) throws IllegalArgumentException, SQLException {
-		
+
 		if (incom instanceof SQLiteCommand) {
 			return JDBCConnector.getSQLiteConnection(((SQLiteCommand)incom).getOnlyDb());			
 		}
@@ -101,6 +116,9 @@ public class JDBCConnector {
 		}
 		else if (incom instanceof XBaseCommand) {
 			return JDBCConnector.getXBaseConnection(((XBaseCommand)incom).getOnlyDbf(), ((XBaseCommand)incom).getEncoding());
+		}
+		else if (incom instanceof XLSQLCommand) {
+			return JDBCConnector.getXLSQLConnection(((XLSQLCommand)incom).getOnlyDb());
 		}
 		else {
 			throw new IllegalArgumentException("Unrecognized database type (need to be one of: SQL Lite *.DB, MySQL url, VFP *.DBC, XBase *.DBF");

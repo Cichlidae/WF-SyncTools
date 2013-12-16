@@ -11,6 +11,7 @@ import com.philipp.tools.best.in.StdinArgs;
 import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
 import com.philipp.tools.best.in.XBaseCommand;
+import com.philipp.tools.best.in.XLSQLCommand;
 import com.philipp.tools.best.out.LoggerOutput;
 import com.philipp.tools.best.out.Output;
 import com.philipp.tools.common.Statics;
@@ -21,7 +22,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class JDBCSQLShell {
 
-	public static final String VERSION = "1.2.RC6";
+	public static final String VERSION = "1.2.RC7";
 	public static final String DESCRIPTION = "JDBC SQL SHELL v" + VERSION;
 
 	private static JCommander commander;
@@ -30,6 +31,7 @@ public class JDBCSQLShell {
 	private static MySQLCommand mysqlCommand = new MySQLCommand();
 	private static XBaseCommand xbaseCommand = new XBaseCommand();
 	private static VFPCommand vfpCommand = new VFPCommand();
+	private static XLSQLCommand xlsqlCommand = new XLSQLCommand();
 
 	@ParametersDelegate
 	private StdinArgs arguments = new StdinArgs();
@@ -40,6 +42,7 @@ public class JDBCSQLShell {
 		commander.addCommand(MySQLCommand.NAME, mysqlCommand);
 		commander.addCommand(XBaseCommand.NAME, xbaseCommand);
 		commander.addCommand(VFPCommand.NAME, vfpCommand);
+		commander.addCommand(XLSQLCommand.NAME, xlsqlCommand);
 		commander.parse(args);
 	}
 
@@ -120,6 +123,15 @@ public class JDBCSQLShell {
 				return;
 			}					
 		}	
+		else if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(XLSQLCommand.NAME) == 0) {	
+			incom = xlsqlCommand;
+			db = new File(xlsqlCommand.getOnlyDb()); 
+			if (!db.exists()) {
+				Logger.err("Such xlSQL database not exists! Check correctness of the path.");
+				System.exit(1);
+				return;
+			}					
+		}					
 		else {
 			Logger.err("Database command not found!");
 			Logger.err("");

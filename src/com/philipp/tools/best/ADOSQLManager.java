@@ -1,5 +1,6 @@
 package com.philipp.tools.best;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -43,7 +44,7 @@ public class ADOSQLManager extends AbstractSQLManager {
 	}
 
 	@Override
-	protected void doQuery(String sql, String table) {
+	protected void doQuery(String sql, String table) throws IOException {
 		
 		sql = sql.trim();
 		if ("".equals(sql)) return;

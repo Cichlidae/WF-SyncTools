@@ -2,8 +2,8 @@
 <project default="create-releases" name="Create runnable JAR and EXE for ADO SQL Shell">
     <!--ANT 1.7 is required-->
 	
-	<property name="version" value="1.2.0.0"/>
-	<property name="txt-version" value="1.2.RC6"/>
+	<property name="version" value="1.2.0.2"/>
+	<property name="txt-version" value="1.2.RC7"/>
 	<property name="program-name" value="ado-sql-shell"/>
 	<property name="plugin-name" value="excel-poi-plugin"/>
 	
@@ -17,31 +17,7 @@
 	<property name="launch4j.dir" location="C:/Program Files (x86)/Launch4j" />
 	
 	<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
-	
-	<!--<target name="remove-shared-zip">
-		<delete failonerror="false">
-            <fileset dir="${shared.dir}">
-                <include name="${program-name}-v${version}.zip" />
-            </fileset>
-        </delete>
-	</target>
-	
-	<target name="share-zip">
-		<copy todir="${shared.dir}">
-			    <fileset dir="${release.dir}">
-			    	 <include name="${program-name}-v${version}.zip" />
-				</fileset>
-			</copy>
-	</target>		
-	
-	<target name="create-zip">		
-		<delete file="${release.dir}/${program-name}-v${version}.zip" failonerror="true"/>
-		<zip destfile="${release.dir}/${program-name}-v${version}.zip">
-			<zipfileset dir="${release.dir}" prefix="${program-name}"/>
-			<zipfileset dir="${docs.dir}" includes="readme.txt" prefix="${program-name}"/>
-		</zip>		
-	</target>-->
-	
+		
 	<target name="create-releases" depends="clear-release-dir, create-run-jar, copy-release-lib">
 		<launch4j configFile="${program-name}-x32.xml" fileVersion="${version}" txtFileVersion="${txt-version}" productVersion="${version}" txtProductVersion="${txt-version}" outfile="${release.dir}/${program-name}-x32.exe" jar="${build.dir}/${program-name}.jar"/>
 		<launch4j configFile="${program-name}.xml" fileVersion="${version}" txtFileVersion="${txt-version}" productVersion="${version}" txtProductVersion="${txt-version}" outfile="${release.dir}/${program-name}.exe"  jar="${build.dir}/${program-name}.jar"/>
@@ -61,7 +37,7 @@
         		<exclude name="com/philipp/tools/check/**" /> <!--not used in ADO release -->   
         		<exclude name="com/philipp/tools/mail/**" /> <!--not used in ADO release -->
         		<exclude name="com/philipp/tools/best/test/**" /> <!--test and beta-classes not used-->
-        		<exclude name="com/premaservices/**" /> <!--premaservices projects not used-->
+        		<exclude name="com/premaservices/**" /> <!--premaservices projects not used-->   		
             </fileset>
         	    
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jacob.jar"/>
@@ -70,6 +46,7 @@
         	<zipfileset includes="org/apache/commons/lang/UnhandledException.class" src="${lib.dir}/commons-lang-2.6.jar"/>
         	<zipfileset includes="org/apache/commons/lang/exception/NestableRuntimeException.class" src="${lib.dir}/commons-lang-2.6.jar"/>
         	<zipfileset includes="org/apache/commons/lang/exception/Nestable.class" src="${lib.dir}/commons-lang-2.6.jar"/>
+        	              
         </jar>
     </target>		
 	

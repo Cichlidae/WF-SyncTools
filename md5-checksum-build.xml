@@ -27,7 +27,7 @@
         	        	        	      
         	<fileset dir="${classes.dir}">        	
         		<include name="com/philipp/tools/check/**" />
-        		<include name="com/philipp/tools/log/**" />
+        		<include name="com/philipp/tools/common/log/**" />
         		<include name="com/beust/jcommander/**" />        		        
             </fileset>        	              
         </jar>

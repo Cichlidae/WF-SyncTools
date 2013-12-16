@@ -48,6 +48,7 @@ public class LoggerOutput implements Output {
 	        	stroke += v + "\t";
 	        }	
 	      } 	
+	      stroke = stroke.substring(0, stroke.lastIndexOf('\t'));	  
 	      Logger.log(stroke);	      
 	      rs.MoveNext();
 	    }	    
@@ -93,7 +94,8 @@ public class LoggerOutput implements Output {
 						}
 						catch (Exception e) {};
 				}
-			}			
+			}	
+			stroke = stroke.substring(0, stroke.lastIndexOf('\t'));	
 			Logger.log(stroke);	 			
         }		
 	}

@@ -17,6 +17,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.philipp.tools.best.db.QueryBridge;
+import com.philipp.tools.common.Statics;
 
 public class ExcelInput extends Input<String> {
 
@@ -68,8 +69,12 @@ public class ExcelInput extends Input<String> {
 								types.set(j, QueryBridge.Type.BOOLEAN);	
 							break;
 						case XSSFCell.CELL_TYPE_STRING:
-							if (type == QueryBridge.Type.NONE)	
-								types.set(j, QueryBridge.Type.STRING);
+							if (type == QueryBridge.Type.NONE) {
+								if (Statics.isDateFormatted(cell.getStringCellValue()))
+									types.set(j, QueryBridge.Type.DATE);	
+								else								
+									types.set(j, QueryBridge.Type.STRING);
+							}	
 							break;
 						case XSSFCell.CELL_TYPE_BLANK:
 						default:	
@@ -89,13 +94,19 @@ public class ExcelInput extends Input<String> {
 					
 					switch (cell.getCellType()) {		
 						case XSSFCell.CELL_TYPE_NUMERIC:
-							value = cell.getNumericCellValue();													
+							value = cell.getNumericCellValue();
+							if (types.get(j) == QueryBridge.Type.DATE) {
+								value = HSSFDateUtil.getJavaDate((Double)value);
+							}																										
 							break;
 						case XSSFCell.CELL_TYPE_BOOLEAN:
 							value = cell.getBooleanCellValue();													
 							break;
 						case XSSFCell.CELL_TYPE_STRING:
-							value = cell.getStringCellValue();															
+							value = cell.getStringCellValue();		
+							if (types.get(j) == QueryBridge.Type.DATE) {
+								value = Statics.getJavaDate((String)value);
+							}														
 							break;
 						case XSSFCell.CELL_TYPE_BLANK:
 						default: 							

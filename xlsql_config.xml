@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<properties>
+<category name="mysql">
+    <property name="driver" value="com.mysql.jdbc.Driver"/>
+    <property name="password" value="hkERO63asonomi"/>
+    <property name="schema" value="xlsql"/>
+    <property name="url" value="jdbc:mysql://localhost:3306/xlsql"/>
+    <property name="user" value="root"/>
+  </category>
+  <category name="hsqldb">
+    <property name="driver" value="org.hsqldb.jdbcDriver"/>
+    <property name="password" value=""/>
+    <property name="schema" value=""/>
+    <property name="url" value="jdbc:hsqldb:."/>
+    <property name="user" value="sa"/>
+  </category>
+  <category name="general">
+    <property name="database" value="d:"/>
+    <property name="engine" value="mysql"/>
+    <property name="log" value="xlsql.log"/>
+  </category>
+</properties>

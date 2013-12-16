@@ -11,9 +11,9 @@ import com.jacob.impl.ado.Recordset;
 
 public interface Output {		
 	
-	public void printRS (String id, Recordset rs);
+	public void printRS (String id, Recordset rs) throws IOException;
 	
-	public void printRS (String id, Recordset rs, List<String> handlers);
+	public void printRS (String id, Recordset rs, List<String> handlers) throws IOException;
 	
 	public void printRS (String id, ResultSet rs) throws SQLException;
 	

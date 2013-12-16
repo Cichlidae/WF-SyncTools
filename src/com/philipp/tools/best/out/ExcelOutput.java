@@ -9,10 +9,15 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -24,6 +29,7 @@ import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder;
@@ -35,6 +41,8 @@ import com.jacob.impl.ado.Recordset;
 import com.philipp.tools.common.GuidGenerator;
 import com.philipp.tools.common.Statics;
 import com.philipp.tools.common.log.Logger;
+import com.premaservices.tools.collection.FilterPredicate;
+import com.premaservices.tools.collection.MatcherPredicate;
 
 public class ExcelOutput implements Output {
 
@@ -43,6 +51,11 @@ public class ExcelOutput implements Output {
 	private int counter = 0;		
 	
 	public static final String HANDLER_GUID = "GUID";
+	public static final String HANDLER_DATE = "DATE";
+	public static final String HANDLER_TIME = "TIME";
+	public static final String HANDLER_FLUSH = "FLUSH";
+	
+	private final MatcherPredicate timeMatcher = new MatcherPredicate(HANDLER_TIME + ":.*");	
 
 	public ExcelOutput (File file) throws IOException {		
 		this(file, false);				
@@ -53,9 +66,7 @@ public class ExcelOutput implements Output {
 		this.file = file;
 
 		if (!rewrite) {						
-			InputStream in = new FileInputStream(file);
-			wb = new XSSFWorkbook(in);
-			in.close();				
+			read(file);			
 		}
 		else {							
 			if (file.exists() && !file.delete()) {
@@ -67,7 +78,14 @@ public class ExcelOutput implements Output {
 		
 	}
 	
-	public void appendSheet (String name, Recordset rs, List<String> handlers) {
+	protected void read (File file) throws IOException {
+		
+		InputStream in = new FileInputStream(file);
+		wb = new XSSFWorkbook(in);
+		in.close();			
+	}
+	
+	public void appendSheet (String name, Recordset rs, List<String> handlers) throws IOException {
 		
 		String sheetName = WorkbookUtil.createSafeSheetName(name);
 		
@@ -131,7 +149,8 @@ public class ExcelOutput implements Output {
 	    	cell.setCellStyle(headerStyle);
 	    }	
 	    
-	    boolean handling = handlers != null && !handlers.isEmpty() ? true : false;
+	    boolean handling = handlers != null && !handlers.isEmpty() ? true : false;	
+	    Collection<String> dateHandlers = null;	 
 	    
 	    if (handling) {
 	    	if (handlers.contains(HANDLER_GUID)) {
@@ -139,7 +158,8 @@ public class ExcelOutput implements Output {
 	    		cell.setCellValue(HANDLER_GUID);
 	    		cell.setCellStyle(headerStyle);	
 	    		columnHandlerCounter++;
-	    	}	    	
+	    	}		    	
+	    	dateHandlers = CollectionUtils.select(handlers, new FilterPredicate(HANDLER_DATE + " " + HANDLER_TIME + ":.*"));
 	    }
 	    	
 	    if (!rs.getEOF()) rs.MoveFirst();	    
@@ -148,21 +168,56 @@ public class ExcelOutput implements Output {
 	    	
 			for (int i = 0; i < fs.getCount(); i++) {	  
 				Cell cell = row.createCell(i);  
-												
+
 				if (rowCounter % 2 != 0) {				
 					cell.setCellStyle(evenStyle);
 				}
 				else {
 					cell.setCellStyle(oddStyle);
 				}
-				  
+				
+				String caption = sheet.getRow(0).getCell(i).getStringCellValue().trim().toUpperCase();				
+
 			    Field f = fs.getItem(i);
 			    Variant v = f.getValue();
-			    
-			    switch (v.getvt()) {
+			    			   	
+			    switch (v.getvt()) {			  
 			    	case Variant.VariantDate: {
 			    		Date date = v.getJavaDate();
-				    	cell.setCellValue(date != null ? Statics.DATE_FORMATTER.format(date) : "");	
+			    		boolean asDefault = true;
+			    		
+			    		if (CollectionUtils.isNotEmpty(dateHandlers)) {			    			
+			    			for (String h : dateHandlers) {
+			    				
+			    				if (h.compareTo(HANDLER_DATE) == 0) {
+			    					cell.setCellValue(date);
+					    			CellStyle style = wb.createCellStyle();
+				    				style.cloneStyleFrom(cell.getCellStyle());				    						    						    	
+					    			XSSFDataFormat df = (XSSFDataFormat)wb.createDataFormat();			    		
+					    			style.setDataFormat(df.getFormat("dd.MM.yyyy"));
+					    			cell.setCellStyle(style);	
+					    			asDefault = false;
+			    				}
+			    				else {
+			    					String target = CollectionUtils.find(dateHandlers, timeMatcher);
+			    					if (target != null) {
+					    				List<String> pfi = this.getHandlerProperties(target);			    							    							    				
+					    				if (pfi.contains(caption) || target.compareTo(HANDLER_TIME) == 0) {			    								    				
+						    				cell.setCellValue(date);
+						    				CellStyle style = wb.createCellStyle();
+						    				style.cloneStyleFrom(cell.getCellStyle());				    								    								    							    								    				
+						    				XSSFDataFormat df = (XSSFDataFormat)wb.createDataFormat();
+						    				style.setDataFormat(df.getFormat("h:mm:ss"));
+						    				cell.setCellStyle(style);	
+						    				asDefault = false;
+					    				}
+					    			}			    								    					
+			    				}			    							    				
+			    			}			    						    			
+			    		}			    					    					    		
+			    					    	
+			    		if (asDefault)
+			    			cell.setCellValue(date != null ? Statics.DATE_FORMATTER.format(date) : "");			    		
 			    		break;
 			    	}	
 			    	case Variant.VariantShort:
@@ -181,13 +236,13 @@ public class ExcelOutput implements Output {
 			    	case Variant.VariantDouble:
 			    		cell.setCellValue(v.getDouble());
 			    		break;
-			    	case Variant.VariantNull:			    		
+			    	case Variant.VariantNull:			    	
 			    		break;
 			    	default:				    		
 			    		cell.setCellValue(v + "");
 			    }			    			    	        	        	        	        	     		
 			} 
-			
+
 			if (handling) {
 				if (handlers.contains(HANDLER_GUID)) {
 					Cell cell = row.createCell(fs.getCount()); 
@@ -216,6 +271,13 @@ public class ExcelOutput implements Output {
 		    sheet.setAutoFilter(CellRangeAddress.valueOf("A" + String.valueOf(1) + ":" + ref + String.valueOf(rowCounter)));
 	    }
 	    
+	    if (handling) {
+	    	if (handlers.contains(HANDLER_FLUSH)) {	    	
+	    		flushAll();
+	    		read(file);
+	    		Logger.debug("Flush out done.");
+	    	}
+	    }		   
 	}
 	
 	@Override
@@ -224,7 +286,7 @@ public class ExcelOutput implements Output {
 	}
 
 	@Override
-	public void printRS(String id, Recordset rs) {			
+	public void printRS(String id, Recordset rs) throws IOException {			
 		appendSheet(id, rs, null);		
 	}
 
@@ -233,7 +295,9 @@ public class ExcelOutput implements Output {
 		
 		FileOutputStream fileOut = new FileOutputStream(file);
 	    wb.write(fileOut);
+	    fileOut.flush();
 	    fileOut.close();	
+	    Logger.debug(file.getAbsolutePath());
 	    
 	}
 
@@ -255,8 +319,20 @@ public class ExcelOutput implements Output {
 	}
 
 	@Override
-	public void printRS(String id, Recordset rs, List<String> handlers) {
+	public void printRS(String id, Recordset rs, List<String> handlers) throws IOException {
 		appendSheet(id, rs, handlers);				
+	}
+	
+	private List<String> getHandlerProperties (String handler) {
+		
+		List<String> list = new ArrayList<String>();
+		
+		String str = StringUtils.substringAfter(handler, ":");
+		if (str != null) {
+			String[] props = StringUtils.split(str, ',');
+			list = Arrays.asList(props);
+		}
+		return list;
 	}
 
 }

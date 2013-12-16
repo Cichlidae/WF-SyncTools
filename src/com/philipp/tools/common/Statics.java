@@ -1,6 +1,8 @@
 package com.philipp.tools.common;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import com.philipp.tools.common.log.Logger;
 
@@ -17,6 +19,21 @@ public final class Statics {
 			return true;
 		}	
 		return false;		
+	}
+	
+	public static boolean isDateFormatted (String str) {
+		
+		try {
+			DATE_FORMATTER.parse(str);
+			return true;
+		}
+		catch (ParseException e) {
+			return false;
+		}	
+	}
+	
+	public static Date getJavaDate (String str) throws ParseException {		
+		return DATE_FORMATTER.parse(str);		
 	}
 
 }
