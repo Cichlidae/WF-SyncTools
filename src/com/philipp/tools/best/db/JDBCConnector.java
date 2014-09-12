@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.philipp.tools.best.in.DBFCommand;
 import com.philipp.tools.best.in.MySQLCommand;
 import com.philipp.tools.best.in.SQLiteCommand;
 import com.philipp.tools.best.in.StdinCommand;
@@ -51,6 +52,26 @@ public class JDBCConnector {
 		String url = "jdbc:odbc:Driver={Microsoft FoxPro VFP Driver (*.dbf)};UID=;" + 
 		             "SourceDB=" + databasePath + ";" + 
       		         "SourceType=DBC;Exclusive=No;BackgroundFetch=Yes;Collate=Machine;Null=Yes;Deleted=Yes;";
+      
+		return  DriverManager.getConnection(url, connInfo);	
+	}
+	
+	public static Connection getDBFConnection (String databasePath, String encoding) throws SQLException {
+		
+		try {
+			Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+		}
+		catch (ClassNotFoundException e) {
+			Logger.err("sun.jdbc.odbc.JdbcOdbcDriver not found.");
+			return null;
+		}
+		
+		java.util.Properties connInfo = new java.util.Properties(); 
+        connInfo.put("charSet", encoding);
+		
+		String url = "jdbc:odbc:Driver={Microsoft FoxPro VFP Driver (*.dbf)};UID=;" + 
+		             "SourceDB=" + databasePath + ";" + 
+      		         "SourceType=DBF;Exclusive=No;BackgroundFetch=Yes;Collate=Machine;Null=Yes;Deleted=Yes;";
       
 		return  DriverManager.getConnection(url, connInfo);	
 	}
@@ -113,6 +134,9 @@ public class JDBCConnector {
 		}
 		else if (incom instanceof VFPCommand) {
 			return JDBCConnector.getVFPConnection(((VFPCommand)incom).getOnlyDbc(), ((VFPCommand)incom).getEncoding());
+		}
+		else if (incom instanceof DBFCommand) {
+			return JDBCConnector.getDBFConnection(((DBFCommand)incom).getOnlyDbf(), ((DBFCommand)incom).getEncoding());
 		}
 		else if (incom instanceof XBaseCommand) {
 			return JDBCConnector.getXBaseConnection(((XBaseCommand)incom).getOnlyDbf(), ((XBaseCommand)incom).getEncoding());

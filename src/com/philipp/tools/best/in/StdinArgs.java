@@ -24,5 +24,8 @@ public class StdinArgs {
 
 	@Parameter(names = "-version", description = "Product version") 
 	public boolean version;
+	
+	@Parameter(names = "-hoff", description = "Resultset header off (stdout only)")
+	public boolean hoff = false;
 
 }

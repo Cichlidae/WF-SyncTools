@@ -8,6 +8,7 @@ public class Logger {
 	public static String CONSOLE_ENCODING = System.getProperty("console.encoding","utf-8");
 	public static String FILE_ENCODING = System.getProperty("file.encoding","utf-8");
 	public static boolean DEBUG_ON = false;
+	public static boolean HEADER_OFF = false;
 			
 	private Logger () {
 	}

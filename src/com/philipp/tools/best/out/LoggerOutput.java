@@ -23,13 +23,15 @@ public class LoggerOutput implements Output {
 	public void printRS(String id, Recordset rs) {	
 		
 		Fields fs = rs.getFields();
-
-	    String fields = "";
-	    for (int i = 0; i < fs.getCount(); i++) {
-	      fields += fs.getItem(i).getName() + "\t";
-	    }
-	    fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
-	    Logger.log(fields);
+		
+		if (!Logger.HEADER_OFF) {
+		    String fields = "";
+		    for (int i = 0; i < fs.getCount(); i++) {
+		      fields += fs.getItem(i).getName() + "\t";
+		    }
+		    fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
+		    Logger.log(fields);
+		}
     
 	    if (!rs.getEOF()) rs.MoveFirst();	    
 	    while (!rs.getEOF()) {
@@ -69,11 +71,14 @@ public class LoggerOutput implements Output {
 		String fields = "";
 		ResultSetMetaData md = rs.getMetaData();
 		
-		for (int i = 1; i <= md.getColumnCount(); i++) {
-			fields += md.getColumnName(i) + "\t";
+		
+		if (!Logger.HEADER_OFF) {
+			for (int i = 1; i <= md.getColumnCount(); i++) {
+				fields += md.getColumnName(i) + "\t";
+			}
+			fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
+		    Logger.log(fields);
 		}
-		fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
-	    Logger.log(fields);
 		
 		while (rs.next()) {
 			String stroke = "";	

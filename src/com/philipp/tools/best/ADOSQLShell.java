@@ -35,7 +35,7 @@ import com.beust.jcommander.converters.FileConverter;
 
 public class ADOSQLShell {
 
-	public static final String VERSION = "1.2.RC7";
+	public static final String VERSION = "1.2.RC9";
 	public static final String DESCRIPTION = "ADO SQL SHELL v" + VERSION;
 
 	private final static int IN_PROCESS = 0;
@@ -67,6 +67,9 @@ public class ADOSQLShell {
 
 	@Parameter(names = "-version", description = "Product version") 
 	private boolean version;
+	
+	@Parameter(names = "-hoff", description = "Resultset header off (stdout only)")
+	private boolean hoff = false;
 
 	private Connection connection = null;
 	private Output out = new LoggerOutput();
@@ -107,6 +110,10 @@ public class ADOSQLShell {
 
 		if (manager.verbose) {
 			Logger.DEBUG_ON = true;
+		}
+		
+		if (manager.hoff) {
+			Logger.HEADER_OFF = true;
 		}
 
 		String jvmArch = System.getProperty("sun.arch.data.model");

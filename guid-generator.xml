@@ -18,6 +18,7 @@
     <minVersion>1.6.0_31</minVersion>
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
+      <opt>-Dfile.encoding=utf-8 -Dconsole.encoding=utf-8</opt>
   </jre>
   <versionInfo>
     <fileVersion>1.0.0.0</fileVersion>

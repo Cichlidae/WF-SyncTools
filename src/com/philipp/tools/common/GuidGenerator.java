@@ -15,7 +15,7 @@ public class GuidGenerator {
 	
 	//UTF-8 source char array (check your code page)
 	private static final char[] CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray();
-	private static final char[] CHARS_RU = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦШЩЬЫЪЭЮЯ".toCharArray(); 
+	private static final char[] CHARS_RU = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ".toCharArray(); 	
 	
 	private static JCommander commander;
 	
@@ -31,6 +31,9 @@ public class GuidGenerator {
 	
 	@Parameter(names = { "-ru"}, description = "Use russian symbols in GUID") 
 	private boolean ru = false;
+	
+	@Parameter(names = {"-c"}, description = "Use only capitals in GUID") 
+	private boolean capital = false;
 	
 	@Parameter(names = {"-help", "-?"}, help = true) 
 	private boolean help; 
@@ -54,20 +57,25 @@ public class GuidGenerator {
 				return;
 			}
 			
+			String guid = "";
+			
 			switch (manager.format) {
-				case GENERAL: Logger.log(getStandardGuid()); break;
-				case MICROSOFT: Logger.log(getMicrosoftGuid()); break;
-				case BASE64: Logger.log(getBase64Guid()); break;
+				case GENERAL: guid = getStandardGuid(); break;
+				case MICROSOFT: guid = getMicrosoftGuid(); break;
+				case BASE64: guid = getBase64Guid(); break;
 				case CUSTOM: {
 					if (manager.length > 0) {
-						Logger.log(getCustomGuid(manager.length, manager.ru));	
+						guid = getCustomGuid(manager.length, manager.ru);	
 					}
 					else {
-						Logger.log(getCustomGuid());
+						guid = getCustomGuid();
 					}					
 					break;
 				}
-			}			
+			}		
+			if (manager.capital)
+				guid = guid.toUpperCase();
+			Logger.log(guid);
 		}
 		catch (Exception e) {			
 			Logger.err(e.getMessage());

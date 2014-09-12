@@ -3,6 +3,7 @@ package com.philipp.tools.best;
 import java.io.File;
 import java.lang.reflect.Constructor;
 
+import com.philipp.tools.best.in.DBFCommand;
 import com.philipp.tools.best.in.Input;
 import com.philipp.tools.best.in.InputListener;
 import com.philipp.tools.best.in.MySQLCommand;
@@ -22,7 +23,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class JDBCSQLShell {
 
-	public static final String VERSION = "1.2.RC7";
+	public static final String VERSION = "1.2.RC9";
 	public static final String DESCRIPTION = "JDBC SQL SHELL v" + VERSION;
 
 	private static JCommander commander;
@@ -31,6 +32,7 @@ public class JDBCSQLShell {
 	private static MySQLCommand mysqlCommand = new MySQLCommand();
 	private static XBaseCommand xbaseCommand = new XBaseCommand();
 	private static VFPCommand vfpCommand = new VFPCommand();
+	private static DBFCommand dbfCommand = new DBFCommand();
 	private static XLSQLCommand xlsqlCommand = new XLSQLCommand();
 
 	@ParametersDelegate
@@ -42,6 +44,7 @@ public class JDBCSQLShell {
 		commander.addCommand(MySQLCommand.NAME, mysqlCommand);
 		commander.addCommand(XBaseCommand.NAME, xbaseCommand);
 		commander.addCommand(VFPCommand.NAME, vfpCommand);
+		commander.addCommand(DBFCommand.NAME, dbfCommand);
 		commander.addCommand(XLSQLCommand.NAME, xlsqlCommand);
 		commander.parse(args);
 	}
@@ -79,7 +82,11 @@ public class JDBCSQLShell {
 		
 		if (shell.arguments.verbose) {
 			Logger.DEBUG_ON = true;
-		}				
+		}	
+		
+		if (shell.arguments.hoff) {
+			Logger.HEADER_OFF = true;
+		}
 
 		if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(SQLiteCommand.NAME) == 0) {	
 			incom = sqliteCommand;
@@ -118,11 +125,26 @@ public class JDBCSQLShell {
 			incom = vfpCommand;
 			db = new File(vfpCommand.getOnlyDbc()); 
 			if (!db.exists()) {
-				Logger.err("Such VFP database not exists! Check correctness of path or filename.");
+				Logger.err("Such VFP(DBC) database not exists! Check correctness of path or filename.");
 				System.exit(1);
 				return;
 			}					
-		}	
+		}			
+		else if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(DBFCommand.NAME) == 0) {	
+			
+			if (Statics.isJvmArch64()) {
+				System.exit(1);
+				return;
+			}
+			
+			incom = dbfCommand;
+			db = new File(dbfCommand.getOnlyDbf()); 
+			if (!db.exists()) {
+				Logger.err("Such VFP(DBF) database not exists! Check correctness of path or filename.");
+				System.exit(1);
+				return;
+			}					
+		}			
 		else if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(XLSQLCommand.NAME) == 0) {	
 			incom = xlsqlCommand;
 			db = new File(xlsqlCommand.getOnlyDb()); 
