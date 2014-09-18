@@ -45,9 +45,12 @@ public class LoggerOutput implements Output {
 	        if (v.getvt() == Variant.VariantDate) {
 	        	Date date = v.getJavaDate();	        	
 	        	stroke += date != null ? Statics.DATE_FORMATTER.format(date) + "\t" : "\t";	        	
-	        }
+	        }	        	        
 	        else {
-	        	stroke += v + "\t";
+	        	if (v.getvt() == Variant.VariantString && Logger.QUOTES_ON) {
+	        		stroke += String.valueOf('\u0022') + v + String.valueOf('\u0022') + "\t";	        		
+	        	}	
+	        	else stroke += v + "\t";
 	        }	
 	      } 	
 	      stroke = stroke.substring(0, stroke.lastIndexOf('\t'));	  
@@ -91,11 +94,18 @@ public class LoggerOutput implements Output {
 						Date date = rs.getDate(i);
 						stroke += date != null ? Statics.DATE_FORMATTER.format(date) + "\t" : "\t";
 						break;
-					}	
-					default:
+					}
 					case Types.VARCHAR:
+						if (Logger.QUOTES_ON) {
+							try {
+								stroke += String.valueOf('\u0022') + rs.getString(i) + String.valueOf('\u0022') + "\t";
+							}
+							catch (Exception e) {};		
+							break;
+						}						
+					default:					
 						try {
-						stroke += rs.getString(i) + "\t";
+							stroke += rs.getString(i) + "\t";
 						}
 						catch (Exception e) {};
 				}
@@ -109,8 +119,8 @@ public class LoggerOutput implements Output {
 	public void printRS(String id, List<String> rs) {
 		
 		Logger.log(id);
-		for (String row : rs) {								
-			Logger.log(row);
+		for (String row : rs) {					
+			Logger.log(!Logger.QUOTES_ON ? row : "'" + row + "'");
 		}			
 	}
 

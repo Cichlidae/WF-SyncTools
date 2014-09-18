@@ -23,7 +23,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class JDBCSQLShell {
 
-	public static final String VERSION = "1.2.RC9";
+	public static final String VERSION = "1.2.RC10";
 	public static final String DESCRIPTION = "JDBC SQL SHELL v" + VERSION;
 
 	private static JCommander commander;
@@ -86,6 +86,10 @@ public class JDBCSQLShell {
 		
 		if (shell.arguments.hoff) {
 			Logger.HEADER_OFF = true;
+		}
+		
+		if (shell.arguments.quotesOn) {
+			Logger.QUOTES_ON = true;
 		}
 
 		if (commander.getParsedCommand() != null && commander.getParsedCommand().compareTo(SQLiteCommand.NAME) == 0) {	

@@ -23,19 +23,19 @@ import com.philipp.tools.best.in.ExcelCommand;
 import com.philipp.tools.best.in.Input;
 import com.philipp.tools.best.in.InputListener;
 import com.philipp.tools.best.in.MSSQLCommand;
+import com.philipp.tools.best.in.StdinArgs;
 import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
 import com.philipp.tools.best.out.LoggerOutput;
 import com.philipp.tools.best.out.Output;
 import com.philipp.tools.common.log.Logger;
 
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.converters.FileConverter;
+import com.beust.jcommander.ParametersDelegate;
 
 public class ADOSQLShell {
 
-	public static final String VERSION = "1.2.RC9";
+	public static final String VERSION = "1.2.RC10";
 	public static final String DESCRIPTION = "ADO SQL SHELL v" + VERSION;
 
 	private final static int IN_PROCESS = 0;
@@ -49,27 +49,9 @@ public class ADOSQLShell {
 	private static VFPCommand vfpCommand = new VFPCommand();
 	private static ExcelCommand excelCommand = new ExcelCommand();
 	private static MSSQLCommand mssqlCommand = new MSSQLCommand();
-
-	@Parameter(names = { "-v", "-verbose"}, description = "STD.ERR logging on/off") 
-	private boolean verbose = false;
-
-	@Parameter(names = "-xlsx", converter = FileConverter.class, description = "Excel file to output (needs excel-io-plugin.jar); input excel file if '-input' flag presents")
-	private File excel;
-
-	@Parameter(names = "-rewrite", description = "Flag if excel output (always create new file; used only with '-xlsx')") 
-	private boolean rewrite = false;
-
-	@Parameter(names = "-input", description = "Flag marked excel input (used only with '-xlsx')", hidden = true) 
-	private boolean input = false;
-
-	@Parameter(names = {"-help", "-?"}, description = "Help", help = true) 
-	private boolean help; 
-
-	@Parameter(names = "-version", description = "Product version") 
-	private boolean version;
 	
-	@Parameter(names = "-hoff", description = "Resultset header off (stdout only)")
-	private boolean hoff = false;
+	@ParametersDelegate
+	private StdinArgs arguments = new StdinArgs();	
 
 	private Connection connection = null;
 	private Output out = new LoggerOutput();
@@ -96,24 +78,28 @@ public class ADOSQLShell {
 		
 		final ADOSQLShell manager = new ADOSQLShell(args);
 		
-		if (manager.help) {
+		if (manager.arguments.help) {
 			commander.usage();
 			System.exit(0);
 			return;
 		}
 		
-		if (manager.version) {
+		if (manager.arguments.version) {
 			Logger.log(DESCRIPTION);
 			System.exit(0);
 			return;
 		}
 
-		if (manager.verbose) {
+		if (manager.arguments.verbose) {
 			Logger.DEBUG_ON = true;
 		}
 		
-		if (manager.hoff) {
+		if (manager.arguments.hoff) {
 			Logger.HEADER_OFF = true;
+		}
+		
+		if (manager.arguments.quotesOn) {
+			Logger.QUOTES_ON = true;
 		}
 
 		String jvmArch = System.getProperty("sun.arch.data.model");
@@ -156,27 +142,27 @@ public class ADOSQLShell {
 		
 		Logger.debug(DESCRIPTION);
 		
-		if (manager.excel != null) {						
-			if (!new File(manager.excel.getParent()).exists()) {
-				Logger.err("Dir for " + manager.excel + " doesn't exist.");					
+		if (manager.arguments.excel != null) {						
+			if (!new File(manager.arguments.excel.getParent()).exists()) {
+				Logger.err("Dir for " + manager.arguments.excel + " doesn't exist.");					
 			}
 			else {
-				if (!manager.excel.exists() && manager.input) {
-					Logger.err(manager.excel + " does not exist.");
+				if (!manager.arguments.excel.exists() && manager.arguments.input) {
+					Logger.err(manager.arguments.excel + " does not exist.");
 					System.exit(1);
 					return;
 				}
-				else if (!manager.excel.exists() && !manager.rewrite) {
-					manager.rewrite = true;					
+				else if (!manager.arguments.excel.exists() && !manager.arguments.rewrite) {
+					manager.arguments.rewrite = true;					
 				}	
-				if (manager.excel.exists() && !manager.excel.isFile()) {
-					Logger.err(manager.excel + " is not a file.");
+				if (manager.arguments.excel.exists() && !manager.arguments.excel.isFile()) {
+					Logger.err(manager.arguments.excel + " is not a file.");
 				}
-				else if (manager.input) {
+				else if (manager.arguments.input) {
 					try {
 						Class<?> inClass = Class.forName("com.philipp.tools.best.in.ExcelInput");
 						Constructor<?> c = inClass.getConstructor(new Class[]{File.class});
-						manager.in = (Input<String>)c.newInstance(manager.excel);
+						manager.in = (Input<String>)c.newInstance(manager.arguments.excel);
 						manager.in.addListener(
 							new InputListener<String> () {
 								@Override
@@ -199,7 +185,7 @@ public class ADOSQLShell {
 					try {
 						Class<?> outClass = Class.forName("com.philipp.tools.best.out.ExcelOutput");
 						Constructor<?> c = outClass.getConstructor(new Class[]{File.class, boolean.class});
-						manager.out = (Output)c.newInstance(manager.excel, manager.rewrite);
+						manager.out = (Output)c.newInstance(manager.arguments.excel, manager.arguments.rewrite);
 						Logger.debug("USE EXCEL IO PLUGIN");
 					}			
 					catch (Exception e) {

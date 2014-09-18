@@ -27,5 +27,8 @@ public class StdinArgs {
 	
 	@Parameter(names = "-hoff", description = "Resultset header off (stdout only)")
 	public boolean hoff = false;
+	
+	@Parameter(names = "-quote", description = "All string values have quotes in out (stdout only)")
+	public boolean quotesOn = false;
 
 }
