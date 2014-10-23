@@ -23,7 +23,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class JDBCSQLShell {
 
-	public static final String VERSION = "1.2.RC10";
+	public static final String VERSION = "1.2.RC11";
 	public static final String DESCRIPTION = "JDBC SQL SHELL v" + VERSION;
 
 	private static JCommander commander;

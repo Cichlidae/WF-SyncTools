@@ -35,7 +35,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class ADOSQLShell {
 
-	public static final String VERSION = "1.2.RC10";
+	public static final String VERSION = "1.2.RC11";
 	public static final String DESCRIPTION = "ADO SQL SHELL v" + VERSION;
 
 	private final static int IN_PROCESS = 0;

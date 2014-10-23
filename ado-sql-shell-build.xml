@@ -2,8 +2,8 @@
 <project default="create-releases" name="Create runnable JAR and EXE for ADO SQL Shell">
     <!--ANT 1.7 is required-->
 	
-	<property name="version" value="1.2.1.0"/>
-	<property name="txt-version" value="1.2.RC10"/>
+	<property name="version" value="1.2.1.1"/>
+	<property name="txt-version" value="1.2.RC11"/>
 	<property name="program-name" value="ado-sql-shell"/>
 	<property name="plugin-name" value="excel-poi-plugin"/>
 	

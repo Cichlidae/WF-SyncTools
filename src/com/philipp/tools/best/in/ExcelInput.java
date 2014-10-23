@@ -18,6 +18,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.philipp.tools.best.db.QueryBridge;
 import com.philipp.tools.common.Statics;
+import com.philipp.tools.common.log.Logger;
 
 public class ExcelInput extends Input<String> {
 
@@ -51,35 +52,37 @@ public class ExcelInput extends Input<String> {
 				
 				for (int j = 0; j < fields.size(); j++) {
 					Cell cell = row.getCell(j);				
-					QueryBridge.Type type = types.get(j);										
-					
-					switch (cell.getCellType()) {	
-						case XSSFCell.CELL_TYPE_NUMERIC:
-							if (HSSFDateUtil.isCellDateFormatted(cell)) {
+					QueryBridge.Type type = types.get(j);	
+									
+					if (cell != null) {					
+						switch (cell.getCellType()) {	
+							case XSSFCell.CELL_TYPE_NUMERIC:
+								if (HSSFDateUtil.isCellDateFormatted(cell)) {
+									if (type == QueryBridge.Type.NONE)	
+										types.set(j, QueryBridge.Type.DATE);	
+								}
+								else {
+									if (type == QueryBridge.Type.NONE)
+										types.set(j, QueryBridge.Type.DOUBLE);		
+								}
+								break;
+							case XSSFCell.CELL_TYPE_BOOLEAN:
 								if (type == QueryBridge.Type.NONE)	
-									types.set(j, QueryBridge.Type.DATE);	
-							}
-							else {
-								if (type == QueryBridge.Type.NONE)
-									types.set(j, QueryBridge.Type.DOUBLE);		
-							}
-							break;
-						case XSSFCell.CELL_TYPE_BOOLEAN:
-							if (type == QueryBridge.Type.NONE)	
-								types.set(j, QueryBridge.Type.BOOLEAN);	
-							break;
-						case XSSFCell.CELL_TYPE_STRING:
-							if (type == QueryBridge.Type.NONE) {
-								if (Statics.isDateFormatted(cell.getStringCellValue()))
-									types.set(j, QueryBridge.Type.DATE);	
-								else								
-									types.set(j, QueryBridge.Type.STRING);
-							}	
-							break;
-						case XSSFCell.CELL_TYPE_BLANK:
-						default:	
-					}										
-				}								
+									types.set(j, QueryBridge.Type.BOOLEAN);	
+								break;
+							case XSSFCell.CELL_TYPE_STRING:
+								if (type == QueryBridge.Type.NONE) {
+									if (Statics.isDateFormatted(cell.getStringCellValue()))
+										types.set(j, QueryBridge.Type.DATE);	
+									else								
+										types.set(j, QueryBridge.Type.STRING);
+								}	
+								break;
+							case XSSFCell.CELL_TYPE_BLANK:
+							default:	
+						}					
+					}
+				}
 			}
 																		
 			QueryBridge bridge = new QueryBridge(sheetName, fields, types, c, true);		
@@ -92,26 +95,31 @@ public class ExcelInput extends Input<String> {
 					Cell cell = row.getCell(j);
 					Object value = "";								
 					
-					switch (cell.getCellType()) {		
-						case XSSFCell.CELL_TYPE_NUMERIC:
-							value = cell.getNumericCellValue();
-							if (types.get(j) == QueryBridge.Type.DATE) {
-								value = HSSFDateUtil.getJavaDate((Double)value);
-							}																										
-							break;
-						case XSSFCell.CELL_TYPE_BOOLEAN:
-							value = cell.getBooleanCellValue();													
-							break;
-						case XSSFCell.CELL_TYPE_STRING:
-							value = cell.getStringCellValue();		
-							if (types.get(j) == QueryBridge.Type.DATE) {
-								value = Statics.getJavaDate((String)value);
-							}														
-							break;
-						case XSSFCell.CELL_TYPE_BLANK:
-						default: 							
-							value = bridge.new Blank();
-					}			
+					if (cell != null) {		
+						switch (cell.getCellType()) {		
+							case XSSFCell.CELL_TYPE_NUMERIC:
+								value = cell.getNumericCellValue();
+								if (types.get(j) == QueryBridge.Type.DATE) {
+									value = HSSFDateUtil.getJavaDate((Double)value);
+								}																										
+								break;
+							case XSSFCell.CELL_TYPE_BOOLEAN:
+								value = cell.getBooleanCellValue();													
+								break;
+							case XSSFCell.CELL_TYPE_STRING:
+								value = cell.getStringCellValue();		
+								if (types.get(j) == QueryBridge.Type.DATE) {
+									value = Statics.getJavaDate((String)value);
+								}														
+								break;
+							case XSSFCell.CELL_TYPE_BLANK:
+							default: 							
+								value = bridge.new Blank();
+						}	
+					}
+					else {
+						value = bridge.new Blank();
+					}
 					values.add(value);															
 				}		
 			
