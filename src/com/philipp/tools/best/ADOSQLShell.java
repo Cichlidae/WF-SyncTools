@@ -35,7 +35,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class ADOSQLShell {
 
-	public static final String VERSION = "1.2.RC11";
+	public static final String VERSION = "1.2.RC12";
 	public static final String DESCRIPTION = "ADO SQL SHELL v" + VERSION;
 
 	private final static int IN_PROCESS = 0;
@@ -205,6 +205,7 @@ public class ADOSQLShell {
 	private int process (StdinCommand incom) {
 		
 		int exit = 0;
+		String s = "";
 		
 		try {		
 			openConnection(incom);
@@ -214,7 +215,7 @@ public class ADOSQLShell {
 					new BufferedReader(new InputStreamReader(System.in, Logger.FILE_ENCODING));
 	        
 	        while (STATUS == IN_PROCESS) {	        
-		        String s = scan.readLine();		      		        
+		        s = scan.readLine();		      		        
 		        if (s == null || s.toLowerCase().compareTo("exit") == 0) {
 		        	STATUS = TERMINATED;
 		        	continue;
@@ -225,16 +226,16 @@ public class ADOSQLShell {
 		        }
 		        catch (Exception e) {
 		        	STATUS = FAILED;
-		        	Logger.err("Oops! Query execution failed.");
-		        	e.printStackTrace();
+		        	Logger.err("Oops! Query execution failed.");	
+		        	Logger.err("\nFail query: " + s + "\n");
 		        	exit = 1;
 		        	throw e;
 		        }	
 	        }
 	        Logger.debug("All queries executed successfully.");	         
 		}
-        catch (Exception e) {            	        
-            e.printStackTrace();
+        catch (Exception e) {
+			Logger.err(e);
             exit = 1;
         }	
 		finally {
