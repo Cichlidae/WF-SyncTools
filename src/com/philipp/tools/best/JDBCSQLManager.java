@@ -71,7 +71,18 @@ public class JDBCSQLManager extends AbstractSQLManager {
 					}	
 					break;
 				}
-				case UPDATE: statement.executeUpdate(sql); break;
+				case UPDATE: { 
+					int count = statement.executeUpdate(sql);
+					String note = DEFAULT_RESULT_NAME;				
+					
+					if (!commandStack.empty()) { 
+						note = parseComment(commandStack.pop(), null);
+					}
+										
+					out.printRS(note, String.valueOf(count));
+					commandStack.clear();
+				    break;
+				}
 				case SELECT:
 				default: {
 					ResultSet rs = statement.executeQuery(sql);

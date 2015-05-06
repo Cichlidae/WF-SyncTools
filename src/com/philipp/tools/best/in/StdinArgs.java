@@ -3,7 +3,9 @@ package com.philipp.tools.best.in;
 import java.io.File;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParametersDelegate;
 import com.beust.jcommander.converters.FileConverter;
+import com.philipp.tools.best.out.StdoutArgs;
 
 public class StdinArgs {
 	
@@ -25,10 +27,7 @@ public class StdinArgs {
 	@Parameter(names = "-version", description = "Product version") 
 	public boolean version;
 	
-	@Parameter(names = "-hoff", description = "Resultset header off (stdout only)")
-	public boolean hoff = false;
+	@ParametersDelegate
+	public StdoutArgs outArgs = new StdoutArgs(); 
 	
-	@Parameter(names = "-quote", description = "All string values have quotes in out (stdout only)")
-	public boolean quotesOn = false;
-
 }

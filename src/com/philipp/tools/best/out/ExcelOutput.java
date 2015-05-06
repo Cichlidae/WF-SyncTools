@@ -335,4 +335,10 @@ public class ExcelOutput implements Output {
 		return list;
 	}
 
+	@Override
+	public void printRS(String id, String s) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("ExcelOutput.printRS<String, String>");
+	}
+
 }

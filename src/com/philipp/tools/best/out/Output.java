@@ -21,6 +21,8 @@ public interface Output {
 	
 	public void printRS (String id, Map<String, ?> rs);
 	
+	public void printRS (String id, String s);
+	
 	public void flushAll () throws IOException;
 	
 	public void flushAll (File file) throws IOException;

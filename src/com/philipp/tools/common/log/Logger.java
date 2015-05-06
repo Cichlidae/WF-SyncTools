@@ -2,14 +2,15 @@ package com.philipp.tools.common.log;
 
 import java.io.UnsupportedEncodingException;
 
+import com.philipp.tools.best.out.StdoutArgs;
+
 public class Logger {
 	
 	public static final String DB_ENCODING = "cp1251";
 	public static String CONSOLE_ENCODING = System.getProperty("console.encoding","utf-8");
 	public static String FILE_ENCODING = System.getProperty("file.encoding","utf-8");
 	public static boolean DEBUG_ON = false;
-	public static boolean HEADER_OFF = false;
-	public static boolean QUOTES_ON = false;
+	//public static StdoutArgs outArgs;
 			
 	private Logger () {
 	}
@@ -38,8 +39,7 @@ public class Logger {
 		System.err.println(message);		
 	}
 	
-	public static void err (Exception e) {
-		if (!DEBUG_ON) return;
+	public static void err (Exception e) {		
 		e.printStackTrace();
 	}
 	

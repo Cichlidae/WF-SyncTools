@@ -17,20 +17,33 @@ import com.jacob.impl.ado.Recordset;
 import com.philipp.tools.common.Statics;
 import com.philipp.tools.common.log.Logger;
 
-public class LoggerOutput implements Output {
+public class LoggerOutput extends AbstractOutput {
+	
+	public LoggerOutput() {
+		super();
+	}
+
+	public LoggerOutput(StdoutArgs outArgs) {
+		super(outArgs);
+	}
 
 	@Override
 	public void printRS(String id, Recordset rs) {	
 		
 		Fields fs = rs.getFields();
 		
-		if (!Logger.HEADER_OFF) {
-		    String fields = "";
-		    for (int i = 0; i < fs.getCount(); i++) {
-		      fields += fs.getItem(i).getName() + "\t";
-		    }
-		    fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
-		    Logger.log(fields);
+		switch (outArgs.header) {
+			case OFF:
+				break;
+			case FIRST:
+				outArgs.header = Statics.HeaderFlag.OFF;
+			default:	
+			    String fields = "";
+			    for (int i = 0; i < fs.getCount(); i++) {
+			      fields += fs.getItem(i).getName() + "\t";
+			    }
+			    fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
+			    Logger.log(fields);
 		}
     
 	    if (!rs.getEOF()) rs.MoveFirst();	    
@@ -43,11 +56,20 @@ public class LoggerOutput implements Output {
 	        Variant v = f.getValue();
 	       
 	        if (v.getvt() == Variant.VariantDate) {
-	        	Date date = v.getJavaDate();	        	
-	        	stroke += date != null ? Statics.DATE_FORMATTER.format(date) + "\t" : "\t";	        	
-	        }	        	        
-	        else {
-	        	if (v.getvt() == Variant.VariantString && Logger.QUOTES_ON) {
+	        	Date date = v.getJavaDate();	
+	        	switch (outArgs.dateFormat) {	        		
+	        		case ODBC:
+	        			stroke += date != null ? Statics.ODBC_DATE_FORMATTER.formatAsODBC(date) + "\t" : "\t";
+	        			break;
+	        		default:
+	        			stroke += date != null ? Statics.DATE_FORMATTER.format(date) + "\t" : "\t";	      
+	        	}
+	        }
+	        else if (v.getvt() == Variant.VariantDecimal) {	        		        	
+	        	stroke += v.getDecimal().toPlainString() + "\t";	        	
+	        }	        
+	        else {	        		        		        	        	
+	        	if (v.getvt() == Variant.VariantString && outArgs.quotesOn) {
 	        		stroke += String.valueOf('\u0022') + v + String.valueOf('\u0022') + "\t";	        		
 	        	}	
 	        	else stroke += v + "\t";
@@ -74,13 +96,17 @@ public class LoggerOutput implements Output {
 		String fields = "";
 		ResultSetMetaData md = rs.getMetaData();
 		
-		
-		if (!Logger.HEADER_OFF) {
-			for (int i = 1; i <= md.getColumnCount(); i++) {
-				fields += md.getColumnName(i) + "\t";
-			}
-			fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
-		    Logger.log(fields);
+		switch (outArgs.header) {
+			case OFF:
+				break;
+			case FIRST:
+				outArgs.header = Statics.HeaderFlag.OFF;
+			default:
+				for (int i = 1; i <= md.getColumnCount(); i++) {
+					fields += md.getColumnName(i) + "\t";
+				}
+				fields = fields.substring(0, fields.lastIndexOf('\t'));	    	    
+			    Logger.log(fields);
 		}
 		
 		while (rs.next()) {
@@ -96,7 +122,7 @@ public class LoggerOutput implements Output {
 						break;
 					}
 					case Types.VARCHAR:
-						if (Logger.QUOTES_ON) {
+						if (outArgs.quotesOn) {
 							try {
 								stroke += String.valueOf('\u0022') + rs.getString(i) + String.valueOf('\u0022') + "\t";
 							}
@@ -120,7 +146,7 @@ public class LoggerOutput implements Output {
 		
 		Logger.log(id);
 		for (String row : rs) {					
-			Logger.log(!Logger.QUOTES_ON ? row : "'" + row + "'");
+			Logger.log(!outArgs.quotesOn ? row : "'" + row + "'");
 		}			
 	}
 
@@ -136,6 +162,12 @@ public class LoggerOutput implements Output {
 	@Override
 	public void printRS(String id, Recordset rs, List<String> handlers) {
 		printRS(id, rs);
+	}
+	
+	@Override
+	public void printRS (String id, String s) {
+		Logger.log(id);
+		Logger.log(s);
 	}
 
 }

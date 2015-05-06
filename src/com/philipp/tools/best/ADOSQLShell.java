@@ -28,6 +28,7 @@ import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
 import com.philipp.tools.best.out.LoggerOutput;
 import com.philipp.tools.best.out.Output;
+import com.philipp.tools.common.Statics;
 import com.philipp.tools.common.log.Logger;
 
 import com.beust.jcommander.JCommander;
@@ -35,8 +36,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class ADOSQLShell {
 
-	public static final String VERSION = "1.2.RC12";
-	public static final String DESCRIPTION = "ADO SQL SHELL v" + VERSION;
+	public static final String DESCRIPTION = "ADO SQL SHELL v" + Statics.VERSION;
 
 	private final static int IN_PROCESS = 0;
 	private final static int FAILED = 1;
@@ -54,7 +54,7 @@ public class ADOSQLShell {
 	private StdinArgs arguments = new StdinArgs();	
 
 	private Connection connection = null;
-	private Output out = new LoggerOutput();
+	private Output out = null;
 	private Input<String> in = null;
 
 	private Stack<String> commandStack = new Stack<String>();
@@ -77,6 +77,7 @@ public class ADOSQLShell {
 		StdinCommand incom = null;
 		
 		final ADOSQLShell manager = new ADOSQLShell(args);
+		manager.out = new LoggerOutput(manager.arguments.outArgs);		
 		
 		if (manager.arguments.help) {
 			commander.usage();
@@ -94,14 +95,6 @@ public class ADOSQLShell {
 			Logger.DEBUG_ON = true;
 		}
 		
-		if (manager.arguments.hoff) {
-			Logger.HEADER_OFF = true;
-		}
-		
-		if (manager.arguments.quotesOn) {
-			Logger.QUOTES_ON = true;
-		}
-
 		String jvmArch = System.getProperty("sun.arch.data.model");
 		if (jvmArch.contains("64")) {
 			Logger.err("You have JVM 64-bit installed by default, but it needs JVM 32-bit for correct work.");
@@ -227,7 +220,7 @@ public class ADOSQLShell {
 		        catch (Exception e) {
 		        	STATUS = FAILED;
 		        	Logger.err("Oops! Query execution failed.");	
-		        	Logger.err("\nFail query: " + s + "\n");
+		        	Logger.err("\nFail query: " + s + "\n");		        	
 		        	exit = 1;
 		        	throw e;
 		        }	
