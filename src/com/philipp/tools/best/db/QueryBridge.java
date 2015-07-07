@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
 import com.philipp.tools.common.Statics;
@@ -31,6 +33,8 @@ public class QueryBridge {
 	private Set<Entry<String, Type>> entries;
 	private List<String> iSQLs = new ArrayList<String>(2);
 	
+	public static final int STRING_LENGHT_LIMIT = 254;
+	
 	public QueryBridge(String tabName, Set<Entry<String, Type>> entries, StdinCommand c) {
 		this.tabName = tabName.toUpperCase();
 		this.c = c;
@@ -41,7 +45,7 @@ public class QueryBridge {
 		this(tabName, fields, types, c, false);
 	}
 	
-	public QueryBridge(String tabName, List<String> fields, List<QueryBridge.Type> types,  StdinCommand c, boolean createBefore) {
+	public QueryBridge(String tabName, List<String> fields, List<QueryBridge.Type> types, StdinCommand c, boolean createBefore) {
 		this.tabName = tabName.toUpperCase();
 		this.types = types;
 		this.c = c;
@@ -50,25 +54,25 @@ public class QueryBridge {
 		
 		if (c instanceof VFPCommand) {
 			iSQLs.add("DROP TABLE " + this.tabName);
-			String csql = "CREATE TABLE " + this.tabName + "(";
+			StringBuilder csql = new StringBuilder("CREATE TABLE ").append(this.tabName).append("(");
 		
 			for (int i = 0; i < fields.size(); i++) {		
-				csql += fields.get(i) + " ";
+				csql.append(fields.get(i)).append(" ");
 				QueryBridge.Type t = types.get(i);
 				
 				switch (t) {
-					case STRING: csql += "C(254)"; break;
-					case INTEGER: csql += "I"; break;
-					case DOUBLE: csql += "B"; break;
-					case DATE: csql += "D"; break;	
-					case BOOLEAN: csql += "L"; break;
-					case MEMO: csql += "M"; break;
-					case NONE: csql += "G"; break;
+					case STRING: csql.append("C(254)"); break;
+					case INTEGER: csql.append("I"); break;
+					case DOUBLE: csql.append("B"); break;
+					case DATE: csql.append("D"); break;	
+					case BOOLEAN: csql.append("L"); break;
+					case MEMO: csql.append("M"); break;
+					case NONE: csql.append("C(254)"); break;
 				}
-				csql += ",";
+				csql.append(",");
 			}
-			csql = csql.substring(0, csql.length() - 1) +  ")";	
-			iSQLs.add(csql);
+			csql.deleteCharAt(csql.lastIndexOf(",")).append(")");		
+			iSQLs.add(csql.toString());		
 		}
 		else {
 			throw new IllegalArgumentException("Unsupported command " + c.getClass().getName());
@@ -79,73 +83,80 @@ public class QueryBridge {
 	public List<String> composeQuery (List<Object> values) {
 		
 		List<String> sqls = new ArrayList<String>(iSQLs);
+		StringBuilder sql = new StringBuilder("INSERT INTO ").append(tabName).append(" VALUES ("); 	
+		Splitter splitter = Splitter.fixedLength(STRING_LENGHT_LIMIT);
+		Joiner joiner = Joiner.on("'+'");
 		
-		String sql = "INSERT INTO " + tabName + " VALUES (";
 		for (int i = 0; i < values.size(); i++) {
 			Object value = values.get(i);
-			if (value instanceof String) {	
+			if (types.get(i) == Type.MEMO) {
 				String str = (String)value;
-				if (str != null) str = StringEscapeUtils.escapeSql(str); 									
-				sql += "'" + str + "',";			
+				if (str != null) str = StringEscapeUtils.escapeSql(str);			
+				sql.append("'").append(joiner.join(splitter.split(str))).append("',");
+			}			
+			else if (value instanceof String) {	
+				String str = (String)value;
+				if (str != null) str = StringEscapeUtils.escapeSql(str); 
+				sql.append("'").append(str).append("',");
 			}
 			else if (value instanceof Date) {
 				if (c instanceof VFPCommand) {
-					Date date = (Date)value; 										
-					sql += "{d'" + Statics.DATE_FORMATTER.format(date) + "'},";				
+					Date date = (Date)value; 							
+					sql.append("{d'").append(Statics.DATE_FORMATTER.format(date)).append("'},");				
 				}
 				else {
-					sql += "'" + value + "',";
+					sql.append("'").append(value).append("',");
 				}								
 			}
 			else if (value instanceof Blank) {
 				switch (types.get(i)) {					
-					case STRING: sql += "'',"; break;
+					case STRING: sql.append("'',"); break;
 					case INTEGER:
-					case DATE: sql += "{d'1970-01-01'},"; break;	
-					case DOUBLE: sql += "0,"; break;	
-					case BOOLEAN:		
+					case DATE: sql.append("{d'1970-01-01'},"); break;	
+					case DOUBLE: sql.append("0,"); break;	
+					case BOOLEAN:					
 					case NONE:	
-					default: sql += ","; 
+					default: sql.append("'',"); 
 				}												
 			}
 			else {								
-				sql += value + ",";
+				sql.append(value).append(",");
 			}
-		}
-		sql = sql.substring(0, sql.length() - 1) +  ")";	
-		sqls.add(sql);
+		}	
+		sql.deleteCharAt(sql.lastIndexOf(",")).append(")");
+		sqls.add(sql.toString());			
+		
 		if (!iSQLs.isEmpty()) iSQLs.clear();
 		return sqls;
 	}
 	
 	public String composeQuery () {
 				
-		String sql = "INSERT INTO " + tabName + " (";
-		String sqlsuf = ") SELECT ";
+		StringBuilder sql = new StringBuilder("INSERT INTO ").append(tabName).append(" (");
+		StringBuilder sqlsuf = new StringBuilder(") SELECT ");
 		
 		Iterator<Entry<String, Type>> iterator = entries.iterator();
 		while (iterator.hasNext()) {
 			Entry<String, Type> entry = iterator.next();
 			String field = entry.getKey();
-			sql += field + ", ";
+			sql.append(field).append(", ");
 			
 			QueryBridge.Type t = entry.getValue();
 			
 			switch (t) {
 				case MEMO:
 				case DATE:
-				case STRING: sqlsuf += "'' AS " + field + ", "; break;
+				case STRING: sqlsuf.append("'' AS ").append(field).append(", "); break;
 				case DOUBLE:
 				case BOOLEAN:
-				case INTEGER: sqlsuf += "0 AS " + field + ", "; break;							
-				case NONE: sqlsuf += "NULL AS " + field + ", "; break;
+				case INTEGER: sqlsuf.append("0 AS ").append(field).append(", "); break;							
+				case NONE: sqlsuf.append("NULL AS ").append(field).append(", "); break;
 			}													
 		}
-		sql = sql.substring(0, sql.length() - 2);
-		sqlsuf = sqlsuf.substring(0, sqlsuf.length() - 2);
-		
-		sql += sqlsuf + " FROM <?>;";	
-		return sql;			
+		sql.deleteCharAt(sql.lastIndexOf(",")).append(")");
+		sqlsuf.deleteCharAt(sql.lastIndexOf(",")).append(")");
+		sql.append(sqlsuf).append(" FROM <?>;");	
+		return sql.toString();			
 	}
 
 }

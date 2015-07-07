@@ -10,7 +10,7 @@ public final class Statics {
 	
 	private Statics () {}
 	
-	public static final String VERSION = "1.2.RC15";
+	public static final String VERSION = "1.3.RC1";
 	
 	public static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd");
 	public static final ODBCDateFormat ODBC_DATE_FORMATTER = new ODBCDateFormat();
@@ -21,6 +21,10 @@ public final class Statics {
 	
 	public static enum HeaderFlag {
 		ON, OFF, FIRST
+	}
+	
+	public static enum CSVFormat {
+		EXCEL, TDF, MYSQL
 	}
 	
 	public static boolean isJvmArch64 () {	

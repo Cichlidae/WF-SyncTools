@@ -57,19 +57,32 @@ public class Command extends Dispatch {
     Dispatch.put(this, "Prepared", new Variant(pfPrepared));
   }
 
-  public Recordset Execute(Variant RecordsAffected, Variant Parameters, int Options) {
-    return (Recordset)Dispatch.call(this, "Execute", RecordsAffected, Parameters, new Variant(Options)).toDispatch();
+  public Recordset Execute(Variant RecordsAffected, Variant[] Parameters) {
+	  return Execute(RecordsAffected, Parameters, -1);
   }
-
+  
+  public Recordset Execute(Variant RecordsAffected, Variant[] Parameters, int Options) {
+    return new Recordset(Dispatch.call(this, "Execute", RecordsAffected, Parameters, new Variant(Options)).toDispatch());
+  }
+  
   public Recordset Execute() {
-	  Variant dummy = new Variant();
-    return new Recordset(Dispatch.call(this, "Execute", dummy).toDispatch());
+	 Variant dummy = new Variant();	
+     return new Recordset(Dispatch.call(this, "Execute", dummy).toDispatch());
+  }
+  
+  public Variant CreateStringInputParameter(String Name, String Value) {
+	  final int LENGTH_LIMIT = 255;
+	  return CreateInputParameter(Name, DataTypeEnum.adVarChar, LENGTH_LIMIT-1, new Variant(Value.length() >= LENGTH_LIMIT ? Value.substring(0, LENGTH_LIMIT): Value));
   }
 
+  public Variant CreateInputParameter(String Name, int Type, int Size, Variant Value) {
+	  return CreateParameter(Name, Type, ParameterDirectionEnum.adParamInput, Size, Value);
+  }
+  
   public Variant CreateParameter(String Name, int Type, int Direction, int Size, Variant Value) {
     return Dispatch.call(this, "CreateParameter", Name, new Variant(Type), new Variant(Direction), new Variant(Size), Value);
   }
-
+  
   // need to wrap Parameters
   public Variant getParameters() {
     return Dispatch.get(this, "Parameters");

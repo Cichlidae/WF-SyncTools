@@ -42,6 +42,7 @@
 		    	<fileset dir="${temp.dir}"/>		 	
 		 		<fileset dir="${classes.dir}">	
 		 	        		<include name="com/premaservices/tools/collection/**"/>
+		 			        <include name="com/philipp/tools/best/out/ExcelOutput.class"/>
 		 	    </fileset>
 		</jar>
 		

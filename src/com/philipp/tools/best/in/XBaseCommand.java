@@ -5,6 +5,7 @@ import java.util.List;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
+import com.philipp.tools.best.args.MetaArgs;
 
 @Parameters(commandDescription = "xBase database connection")
 public class XBaseCommand implements StdinCommand {

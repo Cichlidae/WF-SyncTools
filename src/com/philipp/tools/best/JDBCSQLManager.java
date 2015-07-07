@@ -1,5 +1,6 @@
 package com.philipp.tools.best;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,7 +40,7 @@ public class JDBCSQLManager extends AbstractSQLManager {
 	}
 
 	@Override
-	protected void doQuery(String sql, String table) throws SQLException {
+	protected void doQuery(String sql, String table) throws SQLException, IOException {
 		
 		sql = sql.trim();
 		if ("".equals(sql)) return;

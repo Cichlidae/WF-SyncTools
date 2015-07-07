@@ -5,6 +5,7 @@ import java.util.List;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
+import com.philipp.tools.best.args.MetaArgs;
 
 @Parameters(commandDescription = "SQLite database connection")
 public class SQLiteCommand implements StdinCommand {

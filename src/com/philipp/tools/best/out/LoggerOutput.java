@@ -14,6 +14,7 @@ import com.jacob.com.Variant;
 import com.jacob.impl.ado.Field;
 import com.jacob.impl.ado.Fields;
 import com.jacob.impl.ado.Recordset;
+import com.philipp.tools.best.args.FormatArgs;
 import com.philipp.tools.common.Statics;
 import com.philipp.tools.common.log.Logger;
 
@@ -23,7 +24,7 @@ public class LoggerOutput extends AbstractOutput {
 		super();
 	}
 
-	public LoggerOutput(StdoutArgs outArgs) {
+	public LoggerOutput(FormatArgs outArgs) {
 		super(outArgs);
 	}
 

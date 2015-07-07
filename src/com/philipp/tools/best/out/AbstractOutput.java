@@ -1,14 +1,17 @@
 package com.philipp.tools.best.out;
 
+import com.philipp.tools.best.args.FormatArgs;
+
 abstract class AbstractOutput implements Output {
 
-	protected StdoutArgs outArgs = new StdoutArgs();
+	protected FormatArgs outArgs = new FormatArgs();
 	
 	protected AbstractOutput () {		
 	}
 	
-	protected AbstractOutput (StdoutArgs outArgs) {	
-		this.outArgs = outArgs;
+	protected AbstractOutput (FormatArgs outArgs) {	
+		if (outArgs != null) 
+			this.outArgs = outArgs;
 	}
 	
 }

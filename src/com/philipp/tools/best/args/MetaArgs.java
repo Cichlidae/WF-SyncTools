@@ -1,4 +1,4 @@
-package com.philipp.tools.best.in;
+package com.philipp.tools.best.args;
 
 import com.beust.jcommander.Parameter;
 

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 
+import com.jacob.com.Variant;
 import com.jacob.impl.ado.Command;
 import com.jacob.impl.ado.CommandTypeEnum;
 import com.jacob.impl.ado.Connection;
@@ -17,15 +18,17 @@ import java.util.Stack;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.philipp.tools.best.args.StdinArgs;
 import com.philipp.tools.best.db.ADOConnector;
 import com.philipp.tools.best.db.ADOMetaDataExtractor;
+import com.philipp.tools.best.in.CSVInput;
 import com.philipp.tools.best.in.ExcelCommand;
 import com.philipp.tools.best.in.Input;
 import com.philipp.tools.best.in.InputListener;
 import com.philipp.tools.best.in.MSSQLCommand;
-import com.philipp.tools.best.in.StdinArgs;
 import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
+import com.philipp.tools.best.out.CSVOutput;
 import com.philipp.tools.best.out.LoggerOutput;
 import com.philipp.tools.best.out.Output;
 import com.philipp.tools.common.Statics;
@@ -77,7 +80,7 @@ public class ADOSQLShell {
 		StdinCommand incom = null;
 		
 		final ADOSQLShell manager = new ADOSQLShell(args);
-		manager.out = new LoggerOutput(manager.arguments.outArgs);		
+		manager.out = new LoggerOutput(manager.arguments.frmArgs);		
 		
 		if (manager.arguments.help) {
 			commander.usage();
@@ -167,10 +170,10 @@ public class ADOSQLShell {
 								}									
 							}
 						);												
-						Logger.debug("USE EXCEL IO PLUGIN");
+						Logger.debug("USING POI EXCEL IO PLUGIN");
 					}
 					catch (Exception e) {
-						Logger.err("Cannot use -xlsx in. Required poi excel libs not found.");
+						Logger.err("Cannot use xlsx in. Required poi excel libs not found or incompatible.");
 						e.printStackTrace();
 					}
 				}				
@@ -179,13 +182,57 @@ public class ADOSQLShell {
 						Class<?> outClass = Class.forName("com.philipp.tools.best.out.ExcelOutput");
 						Constructor<?> c = outClass.getConstructor(new Class[]{File.class, boolean.class});
 						manager.out = (Output)c.newInstance(manager.arguments.excel, manager.arguments.rewrite);
-						Logger.debug("USE EXCEL IO PLUGIN");
+						Logger.debug("USING POI EXCEL IO PLUGIN");
 					}			
 					catch (Exception e) {
-						Logger.err("Cannot use -xlsx out. Required poi excel libs not found.");
+						Logger.err("Cannot use xlsx out. Required poi excel libs not found or incompatible.");
 						e.printStackTrace();
 					}					
 				}
+			}
+		}
+		else {
+			switch (checkPlugin(manager.arguments.csv, manager.arguments.input, manager.arguments.rewrite)) {
+				case PLUGIN_CRASH:
+					System.exit(1);
+					return;
+				case PLUGIN_DISABLED:
+					break;
+				case PLUGIN_ENABLED_REWRITABLE:
+					manager.arguments.rewrite = true;
+				case PLUGIN_ENABLED:
+					if (manager.arguments.input) {
+						try {					
+							manager.in = new CSVInput(manager.arguments.csv, manager.arguments.frmArgs);
+							manager.in.addListener(
+									new InputListener<String> () {
+										@Override
+										public void doEvent(String[] arg) {
+											try {
+												manager.doQuery(arg[0], arg[1]);
+											}
+											catch (Exception e) {
+												e.printStackTrace();
+											}
+										}									
+									}
+								);
+						}
+						catch (Exception e) {
+							Logger.err("Cannot use csv in.");
+							e.printStackTrace();
+						}
+					}
+					else {
+						try {							
+							manager.out = new CSVOutput(manager.arguments.csv, manager.arguments.rewrite, manager.arguments.frmArgs);																					
+						}			
+						catch (Exception e) {
+							Logger.err("Cannot use csv out.");
+							e.printStackTrace();
+						}							
+					}				
+					break;
 			}
 		}
 		
@@ -193,6 +240,38 @@ public class ADOSQLShell {
 		Logger.debug("console.encoding: " + System.getProperty("console.encoding","undefined"));
 								
 		System.exit(manager.process(incom));		
+	}
+	
+	static final int PLUGIN_CRASH = -1;
+	static final int PLUGIN_DISABLED = 0;
+	static final int PLUGIN_ENABLED = 1;
+	static final int PLUGIN_ENABLED_REWRITABLE = 2;
+			
+	private static int checkPlugin (File pluginFile, boolean input, boolean rewrite) {
+		
+		int r = PLUGIN_DISABLED;
+		
+		if (pluginFile != null) {
+			if (!new File(pluginFile.getParent()).exists()) {
+				Logger.err("Dir for " + pluginFile + " doesn't exist.");
+			}	
+			else {
+				if (!pluginFile.exists() && input) {
+					Logger.err(pluginFile + " does not exist.");
+					return PLUGIN_CRASH;
+				}
+				if (!pluginFile.exists() && !rewrite) {
+					r = PLUGIN_ENABLED_REWRITABLE;					
+				}	
+				if (pluginFile.exists() && !pluginFile.isFile()) {
+					Logger.err(pluginFile + " is not a file.");
+					r = PLUGIN_DISABLED;
+				}
+				r = PLUGIN_ENABLED;
+			}
+		}
+		return r;
+		
 	}
 	
 	private int process (StdinCommand incom) {
@@ -291,7 +370,17 @@ public class ADOSQLShell {
 					}	
 					break;
 				}
-				case UPDATE: comm.Execute(); break;
+				case BEGIN_TRANSACTION: int st = connection.BeginTrans(); Logger.debug(st); break;
+				case COMMIT_TRANSACTION: connection.CommitTrans(); break;
+				case ROLLBACK_TRANSACTION: connection.RollbackTrans(); break;
+				case UPDATE: comm.Execute(); break;		
+				case PREPARED: {
+					//TODO test
+					Variant affectedCount = new Variant(0L);
+					Variant parameter = comm.CreateStringInputParameter("Test", "Test");						
+					comm.Execute(affectedCount, new Variant[] {parameter}); 							
+		            break;
+				}    
 				case SELECT:
 				default: {
 					Recordset rs = comm.Execute();	
@@ -315,6 +404,11 @@ public class ADOSQLShell {
 	private static final int SELECT = 1;
 	private static final int UPDATE = 2;
 	private static final int DROP = 3;
+	private static final int PREPARED = 4;
+	private static final int BEGIN_TRANSACTION = 5;
+	private static final int COMMIT_TRANSACTION = 6;
+	private static final int ROLLBACK_TRANSACTION = 7;
+	
 
 	private static final String DEFAULT_RESULT_NAME = "DEFAULT";
 	
@@ -325,7 +419,13 @@ public class ADOSQLShell {
 		String uSQL = sql.toUpperCase().trim();	
 		return uSQL.startsWith(COMMENT_MARKER) ? COMMENT : (
 					uSQL.startsWith("SELECT") && uSQL.indexOf("INTO CURSOR") == -1 ? SELECT : (
-							uSQL.startsWith("DROP") ? DROP : UPDATE
+							uSQL.startsWith("DROP") ? DROP : (
+									uSQL.startsWith("BEGIN TRANSACTION") ? BEGIN_TRANSACTION : (
+											uSQL.startsWith("COMMIT TRANSACTION") ? COMMIT_TRANSACTION : (
+													uSQL.startsWith("ROLLBACK TRANSACTION") ? ROLLBACK_TRANSACTION : UPDATE
+											)											
+									)																		
+							)			
 					)				
 			   );										
 	}

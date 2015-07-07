@@ -302,7 +302,7 @@ public class ExcelOutput implements Output {
 	}
 
 	@Override
-	public void printRS(String id, ResultSet rs) throws SQLException {	
+	public void printRS(String id, ResultSet rs) throws SQLException, IOException {	
 		throw new UnsupportedOperationException("ExcelOutput.printRS<String, ResultSet>");
 	}
 

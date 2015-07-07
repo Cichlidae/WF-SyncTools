@@ -5,6 +5,7 @@ import java.util.List;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
+import com.philipp.tools.best.args.MetaArgs;
 
 @Parameters(commandDescription = "Visual Fox Pro database connection (only 32-bit JVM supported)")
 public class DBFCommand implements StdinCommand {

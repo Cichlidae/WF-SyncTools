@@ -18,7 +18,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.philipp.tools.best.db.QueryBridge;
 import com.philipp.tools.common.Statics;
-import com.philipp.tools.common.log.Logger;
 
 public class ExcelInput extends Input<String> {
 
@@ -120,7 +119,7 @@ public class ExcelInput extends Input<String> {
 					else {
 						value = bridge.new Blank();
 					}
-					values.add(value);															
+					values.add(value);													
 				}		
 			
 				List<String> queries = bridge.composeQuery(values);					

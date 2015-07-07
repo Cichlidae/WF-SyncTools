@@ -1,7 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>console</headerType>
-  <jar>D:\JavaSoft\BestVisualTools_x32\SyncTools\bin\ado-sql-shell.jar</jar>
+  <jar>D:\JavaSoft\BestVisualTools_x32\SyncTools\build\ado-sql-shell.jar</jar>
   <outfile>D:\JavaSoft\BestVisualTools_x32\SyncTools\bin\ado-sql-shell.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
@@ -10,14 +11,17 @@
   <downloadUrl>http://java.com/download</downloadUrl>
   <supportUrl></supportUrl>
   <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
   <icon></icon>
   <jre>
     <path></path>
     <bundledJre64Bit>false</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
     <minVersion>1.6.0_31</minVersion>
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>32</runtimeBits>
     <maxHeapSize>1024</maxHeapSize>
     <opt>-Dfile.encoding=utf-8 -Dconsole.encoding=utf-8</opt>
   </jre>

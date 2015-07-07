@@ -3,12 +3,12 @@ package com.philipp.tools.best;
 import java.io.File;
 import java.lang.reflect.Constructor;
 
+import com.philipp.tools.best.args.StdinArgs;
 import com.philipp.tools.best.in.DBFCommand;
 import com.philipp.tools.best.in.Input;
 import com.philipp.tools.best.in.InputListener;
 import com.philipp.tools.best.in.MySQLCommand;
 import com.philipp.tools.best.in.SQLiteCommand;
-import com.philipp.tools.best.in.StdinArgs;
 import com.philipp.tools.best.in.StdinCommand;
 import com.philipp.tools.best.in.VFPCommand;
 import com.philipp.tools.best.in.XBaseCommand;
@@ -59,7 +59,7 @@ public class JDBCSQLShell {
 
 		JDBCSQLShell shell = new JDBCSQLShell(args);			
 		Input<String> in = null;
-		Output out = new LoggerOutput(shell.arguments.outArgs);
+		Output out = new LoggerOutput(shell.arguments.frmArgs);
 
 		if (args.length == 0) {
 			commander.usage();

@@ -1,9 +1,11 @@
-package com.philipp.tools.common;
+package com.philipp.tools.jcconverters;
 
 import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.ParameterException;
+import com.philipp.tools.common.Statics;
+import com.philipp.tools.common.Statics.HeaderFlag;
 
-public class HeaderFlagConverter implements IStringConverter<Statics.HeaderFlag> {
+public class HeaderConverter implements IStringConverter<Statics.HeaderFlag> {
 
 	@Override
 	public Statics.HeaderFlag convert(String value) {

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.philipp.tools.best.args.MetaArgs;
 
 @Parameters(separators = "=", commandDescription = "SQL Server connection")
 public class MSSQLCommand implements StdinCommand {
